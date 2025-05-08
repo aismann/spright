@@ -24,7 +24,6 @@ enum class Definition {
   duplicates,
   alpha,
   pack,
-  scale,
   debug,
 
   path,
@@ -63,7 +62,7 @@ enum class Definition {
   align_pivot,
 
   transform,
-  resize,
+  scale,
   rotate,
 
   description,
@@ -93,8 +92,6 @@ struct State {
   Alpha alpha{ };
   RGBA alpha_color{ };
   Pack pack{ };
-  real scale{ 1.0 };
-  ResizeFilter scale_filter{ };
   bool debug{ };
 
   std::filesystem::path path;

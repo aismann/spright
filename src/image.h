@@ -117,7 +117,7 @@ enum class WrapMode {
   clamp, mirror, repeat 
 };
 
-enum class ResizeFilter {
+enum class ScaleFilter {
   undefined,
   box,          // A trapezoid w/1-pixel wide ramps, same result as box for integer scale ratios
   triangle,     // On upsampling, produces same results as bilinear texture filtering
@@ -190,7 +190,7 @@ void draw_rect_stipple(Image& image, const Rect& rect, const RGBA& color, int st
 void fill_rect(Image& image, const Rect& rect, const RGBA& color);
 
 Image clone_image(const Image& image, const Rect& rect = { }, int padding = 0);
-Image resize_image(const Image& image, real scale, ResizeFilter filter);
+Image resize_image(const Image& image, const SizeF& scale, ScaleFilter filter);
 void copy_rect(const Image& source, const Rect& source_rect, Image& dest, int dx, int dy);
 void copy_rect_rotated_cw(const Image& source, const Rect& source_rect, Image& dest, int dx, int dy);
 void copy_rect(const Image& source, const Rect& source_rect, Image& dest, 

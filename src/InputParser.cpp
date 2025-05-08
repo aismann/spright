@@ -1,6 +1,7 @@
 
 #include "InputParser.h"
 #include "globbing.h"
+#include "transforming.h"
 #include <charconv>
 #include <algorithm>
 #include <cstring>
@@ -482,6 +483,7 @@ void InputParser::sheet_ends(State& state) {
 
 void InputParser::output_ends(State& state) {
   update_applied_definitions(Definition::output);
+  update_applied_definitions(Definition::transform);
   const auto& filename = state.output_filenames.back();
   auto output = get_output(filename);
   output->filename = FilenameSequence(path_to_utf8(filename));
@@ -489,9 +491,9 @@ void InputParser::output_ends(State& state) {
   output->map_suffixes = state.map_suffixes;
   output->alpha = state.alpha;
   output->alpha_color = state.alpha_color;
-  output->scale = state.scale;
-  output->scale_filter = state.scale_filter;
+  output->transforms = state.transforms;
   output->debug = state.debug;
+  output->scale = get_transform_scale(state.transforms);
 }
 
 void InputParser::deduce_globbed_inputs(State& state) {

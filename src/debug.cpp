@@ -5,18 +5,18 @@ namespace spright {
 
 namespace {
   Rect round(const RectF& rect) {
-    return Rect{ 
-      to_int(rect.x + 0.5),
-      to_int(rect.y + 0.5),
-      std::max(to_int(rect.w + 0.5), 1),
-      std::max(to_int(rect.h + 0.5), 1)
+    return Rect{
+      to_int_round(rect.x),
+      to_int_round(rect.y),
+      std::max(to_int_round(rect.w), 1),
+      std::max(to_int_round(rect.h), 1)
     };
   }
 
   Point round(const PointF& point) {
     return Point{
-      to_int(point.x + 0.5),
-      to_int(point.y + 0.5),
+      to_int_round(point.x),
+      to_int_round(point.y),
     };
   }
 
@@ -42,19 +42,22 @@ namespace {
   }
 } // namespace
 
-void draw_debug_info(Image& target, const Sprite& sprite, real scale) {
+void draw_debug_info(Image& target, const Sprite& sprite, const SizeF& scale) {
+  if (empty(scale))
+    return;
+
   const auto scale_rect = [&](const auto& rect) {
     return RectF{ 
-      rect.x * scale,
-      rect.y * scale,
-      rect.w * scale,
-      rect.h * scale
+      rect.x * scale.x,
+      rect.y * scale.y,
+      rect.w * scale.x,
+      rect.h * scale.y
     };
   };
   const auto scale_point = [&](const auto& point) {
     return PointF{
-      point.x * scale,
-      point.y * scale
+      point.x * scale.x,
+      point.y * scale.y
     };
   };
 
@@ -71,8 +74,8 @@ void draw_debug_info(Image& target, const Sprite& sprite, real scale) {
   // scale point coordinates, so bottom right is inside sprite
   // (similar to 1.0 for texture coordinates...)
   const auto scale_point_coord = PointF(
-    scale - scale / trimmed_rect.w, 
-    scale - scale / trimmed_rect.h);
+    scale.x - scale.x / trimmed_rect.w,
+    scale.y - scale.y / trimmed_rect.h);
 
   if (!sprite.vertices.empty()) {
     const auto origin = scale_point(sprite.trimmed_rect.xy());
@@ -99,7 +102,7 @@ void draw_debug_info(Image& target, const Sprite& sprite, real scale) {
   draw_point(target, rect.xy() + pivot_point, RGBA{ 255, 0, 0, 255 });
 }
 
-void draw_debug_info(Image& target, const Slice& slice, real scale) {
+void draw_debug_info(Image& target, const Slice& slice, const SizeF& scale) {
   for (const auto& sprite : slice.sprites)
     draw_debug_info(target, sprite, scale);
 }

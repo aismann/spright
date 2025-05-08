@@ -57,9 +57,9 @@ private:
   std::filesystem::path m_filename;
 };
 
-struct TransformResize {
-  real size;
-  ResizeFilter resize_filter;
+struct TransformScale {
+  SizeF scale;
+  ScaleFilter scale_filter;
 };
 
 struct TransformRotate {
@@ -67,7 +67,7 @@ struct TransformRotate {
   RotateMethod rotate_method;
 };
 
-using TransformStep = std::variant<TransformResize, TransformRotate>;
+using TransformStep = std::variant<TransformScale, TransformRotate>;
 using Transform = std::vector<TransformStep>;
 using TransformPtr = std::shared_ptr<const Transform>;
 
@@ -84,9 +84,11 @@ struct Output {
   std::vector<std::string> map_suffixes;
   Alpha alpha{ };
   RGBA alpha_color{ };
-  real scale{ };
-  ResizeFilter scale_filter{ };
+  std::vector<TransformPtr> transforms;
   bool debug{ };
+
+  // the scale after transformation, 0 when rotated
+  SizeF scale{ };
 };
 
 struct Sheet {

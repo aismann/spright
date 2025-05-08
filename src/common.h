@@ -66,6 +66,12 @@ int to_int(const T& v) {
 }
 
 template<typename T>
+int to_int_round(const T& v) {
+  static_assert(std::is_floating_point_v<T>);
+  return static_cast<int>(v + T{ 0.5 });
+}
+
+template<typename T>
 unsigned int to_unsigned(const T& v) { 
   static_assert(std::is_integral_v<T> && std::is_signed_v<T>);
   return static_cast<unsigned int>(v); 

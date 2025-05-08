@@ -199,8 +199,8 @@ namespace {
     const auto my = std::max(std::max(std::max(p0.y, p1.y), p2.y), p3.y);
 
     // make destination size even/odd like source
-    const auto dx = to_int(mx * 2.0 + 0.5);
-    const auto dy = to_int(my * 2.0 + 0.5);
+    const auto dx = to_int_round(mx * 2.0);
+    const auto dy = to_int_round(my * 2.0);
     auto dest = Image(source.type(),
       dx + (source.width() % 2 != dx % 2 ? 1 : 0), 
       dy + (source.height() % 2 != dy % 2 ? 1 : 0));
@@ -230,7 +230,7 @@ namespace {
   Image rotate_image_nearest(ImageView<const RGBAF> image_rgbaf, real angle, const RGBAF& background_rgbaf) {
     return rotate_image_sample(image_rgbaf, angle, 
       [&](const PointF& pos) {
-        const auto point = Point(to_int(pos.x + 0.5), to_int(pos.y + 0.5));
+        const auto point = Point(to_int_round(pos.x), to_int_round(pos.y));
         return (containing(image_rgbaf.bounds(), point) ? 
           image_rgbaf.value_at(point) : background_rgbaf);
       });
@@ -576,15 +576,16 @@ Image get_gray_levels(const Image& image, const Rect& rect) {
   return result;
 }
 
-Image resize_image(const Image& image, real scale, ResizeFilter filter) {
-  const auto width = to_int(image.width() * scale + 0.5);
-  const auto height = to_int(image.height() * scale + 0.5);
+Image resize_image(const Image& image, const SizeF& scale, ScaleFilter filter) {
+  const auto width = to_int_round(image.width() * scale.x);
+  const auto height = to_int_round(image.height() * scale.y);
   if (width == image.width() && height == image.height())
     return clone_image(image);
 
-  if (filter == ResizeFilter::undefined &&
-      std::fmod(scale, 1.0f) == 0)
-    filter = ResizeFilter::box;
+  if (filter == ScaleFilter::undefined &&
+      std::fmod(scale.x, real{ 1 }) == 0 &&
+      std::fmod(scale.y, real{ 1 }) == 0)
+    filter = ScaleFilter::box;
 
   auto output = Image(image.type(), width, height);
   auto data_type = stbir_datatype{ };

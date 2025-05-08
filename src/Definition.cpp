@@ -69,7 +69,6 @@ std::string_view get_definition_name(Definition definition) {
     case Definition::duplicates: return "duplicates";
     case Definition::alpha: return "alpha";
     case Definition::pack: return "pack";
-    case Definition::scale: return "scale";
     case Definition::debug: return "debug";
     case Definition::path: return "path";
     case Definition::glob: return "glob";
@@ -105,7 +104,7 @@ std::string_view get_definition_name(Definition definition) {
     case Definition::align: return "align";
     case Definition::align_pivot: return "align-pivot";
     case Definition::transform: return "transform";
-    case Definition::resize: return "resize";
+    case Definition::scale: return "scale";
     case Definition::rotate: return "rotate";
     case Definition::description: return "description";
     case Definition::template_: return "template";
@@ -131,7 +130,7 @@ Definition get_affected_definition(Definition definition) {
     // directly change state
     case Definition::row:
     case Definition::skip:
-    // allow transforms without sprites
+    // allow transforms without sprites/outputs
     case Definition::transform:
       return Definition::none;
 
@@ -150,7 +149,6 @@ Definition get_affected_definition(Definition definition) {
       return Definition::sheet;
 
     case Definition::alpha:
-    case Definition::scale:
     case Definition::debug:
       return Definition::output;
 
@@ -184,7 +182,7 @@ Definition get_affected_definition(Definition definition) {
     case Definition::span:
       return Definition::sprite;
 
-    case Definition::resize:
+    case Definition::scale:
     case Definition::rotate:
       return Definition::transform;
 
@@ -203,6 +201,10 @@ void apply_definition(Definition definition,
   auto argument_index = 0u;
   const auto arguments_left = [&]() {
     return argument_index < arguments.size();
+  };
+  const auto next_argument_is_real = [&]() {
+    return (arguments_left() &&
+      to_real(arguments[argument_index]).has_value());
   };
   const auto check_string = [&]() {
     check(arguments_left(), "invalid argument count for ",
@@ -319,12 +321,12 @@ void apply_definition(Definition definition,
     }
     return anchor;
   };
-  const auto check_resize_filter = [&]() -> ResizeFilter {
+  const auto check_scale_filter = [&]() -> ScaleFilter {
     const auto string = check_string();
     if (const auto index = index_of(string, 
         { "default", "box", "triangle", "cubicspline",
             "catmullrom", "mitchell", "pointsample" }); index >= 0)
-      return static_cast<ResizeFilter>(index);
+      return static_cast<ScaleFilter>(index);
     error("invalid resize filter '", string, "'");
     return { };
   };
@@ -448,13 +450,6 @@ void apply_definition(Definition definition,
         error("invalid pack method '", string, "'");
       break;
     }
-
-    case Definition::scale:
-      state.scale = check_real();
-      check(state.scale >= 0.01 && state.scale < 100, "invalid scale");
-      state.scale_filter = (arguments_left() ? 
-        check_resize_filter() : ResizeFilter::undefined);
-      break;
 
     case Definition::debug:
       state.debug = check_bool(true);
@@ -660,12 +655,14 @@ void apply_definition(Definition definition,
       break;
     }
 
-    case Definition::resize: {
-      const auto size = check_real();
-      check(state.scale >= 0.01 && state.scale < 100, "invalid size");
-      const auto resize_filter = (arguments_left() ? 
-        check_resize_filter() : ResizeFilter::undefined);
-      add_transform_step(TransformResize{ size, resize_filter });
+    case Definition::scale: {
+      const auto scale_x = check_real();
+      const auto scale_y = (next_argument_is_real() ? check_real() : scale_x);
+      check(scale_x >= 0.01 && scale_x < 100 &&
+            scale_y >= 0.01 && scale_y < 100, "invalid scale");
+      const auto scale_filter = (arguments_left() ?
+        check_scale_filter() : ScaleFilter::undefined);
+      add_transform_step(TransformScale{ { scale_x, scale_y }, scale_filter });
       break;
     }
     

@@ -282,13 +282,13 @@ TEST_CASE("scope - Problems") {
   // empty transform definition is allowed
   CHECK_NOTHROW(parse(R"(
     transform "t1"
-      # resize 1
+      # scale 1
   )"));
 
   // transform without sprites is allowed
   CHECK_NOTHROW(parse(R"(
     transform "t1"
-      resize 2
+      scale 2
 
     input "test/Items.png"
       sprite "test"
@@ -297,7 +297,7 @@ TEST_CASE("scope - Problems") {
   // nested transforms are not allowed
   CHECK_THROWS(parse(R"(
     transform "t1"
-      resize 2
+      scale 2
 
     transform "t2"
       transform "t1"
@@ -306,21 +306,21 @@ TEST_CASE("scope - Problems") {
   // duplicate transform definition
   CHECK_THROWS(parse(R"(
     transform "t1"
-      resize 2
+      scale 2
 
     transform "t1"
-      resize 2
+      scale 2
   )"));
 }
 
 TEST_CASE("scope - Transform") {
   auto parser = parse(R"(
     transform t1
-      resize 1
+      scale 1 0.5
 
     transform t2
-      resize 2
-      resize 3
+      scale 2
+      scale 3
 
     input "test/Items.png"
       grid 16 16
@@ -330,12 +330,12 @@ TEST_CASE("scope - Transform") {
       sprite           # [2]: t1, t2
         transform t2
       sprite           # [3]: t1, r4, r5, t2, r6
-        resize 4
-        resize 5
+        scale 4
+        scale 5
         transform t2
-        resize 6
+        scale 6
       duplicate        # [4]: t1, r7
-        resize 7
+        scale 7
   )");
   const auto& sprites = parser.sprites();
   REQUIRE(sprites.size() == 5);
@@ -354,4 +354,27 @@ TEST_CASE("scope - Transform") {
   REQUIRE(sprites[4].transforms.size() == 2);
   CHECK(sprites[4].transforms[0]->size() == 1);
   CHECK(sprites[4].transforms[1]->size() == 1);
+}
+
+TEST_CASE("scope - Transform Output") {
+  auto parser = parse(R"(
+    transform t1
+      scale 2 1
+    transform t2
+      rotate 90
+    sheet "tex1"
+      transform t1
+      output "output1.png"
+      output "output2.png"
+        transform t2
+    input "test/Items.png"
+      grid 16 16
+      sprite
+      sprite
+  )");
+  const auto& sprites = parser.sprites();
+  REQUIRE(sprites.size() == 2);
+  REQUIRE(sprites[0].sheet->outputs.size() == 2);
+  CHECK(sprites[0].sheet->outputs[0]->transforms.size() == 1);
+  CHECK(sprites[0].sheet->outputs[1]->transforms.size() == 2);
 }

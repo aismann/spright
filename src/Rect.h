@@ -100,6 +100,7 @@ using Rect = RectT<int>;
 using RectF = RectT<real>;
 
 constexpr bool empty(const Size& size) { return (size.x == 0 || size.y == 0); }
+constexpr bool empty(const SizeF& size) { return (size.x == 0 || size.y == 0); }
 constexpr bool empty(const Rect& rect) { return (rect.w == 0 || rect.h == 0); }
 
 constexpr PointF rotate_cw(const PointF& point, real width) {
