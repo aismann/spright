@@ -22,15 +22,20 @@ public:
   Scheduler& operator=(const Scheduler&) = delete;
 
   ~Scheduler() {
+    shutdown();
+  }
+
+  void shutdown() {
     auto lock = std::unique_lock(m_tasks_mutex);
-    m_shutdown = true;
+    if (std::exchange(m_shutdown, true))
+      return;
     lock.unlock();
     m_tasks_signal.notify_all();
     for (auto& thread : m_threads)
       thread.join();
   }
 
-  void async(AsyncFunction function) noexcept {
+  void async(AsyncFunction&& function) noexcept {
     auto lock = std::unique_lock(m_tasks_mutex);
     m_tasks.push_back({ std::move(function), 1, 1 });
     ++m_tasks_pending;
@@ -89,7 +94,7 @@ private:
     for (;;) {
       m_tasks_signal.wait(lock,
         [&]() { return (m_shutdown || m_tasks_pending); });
-      if (m_shutdown)
+      if (m_shutdown && !m_tasks_pending)
         break;
       execute_next(lock);
     }

@@ -76,6 +76,10 @@ namespace {
         color.channel(i) = RGBA::to_channel(sum[to_unsigned(i)] / bucket.colors.size());
       palette.push_back(color);
     }
+
+    // remove duplicate colors from palette
+    std::sort(palette.begin(), palette.end());
+    palette.erase(std::unique(palette.begin(), palette.end()), palette.end());
     return palette;
   }
 
@@ -155,7 +159,7 @@ namespace {
       }, max_colors);
   }
 
-  Image quantize_image(ImageView<RGBA> image_rgba, const Palette& palette) {
+  Image quantize_image(ImageView<const RGBA> image_rgba, const Palette& palette) {
     auto out = Image(ImageType::Mono, image_rgba.width(), image_rgba.height());
     const auto out_mono = out.view<RGBA::Channel>();
     for (auto y = 0; y < image_rgba.height(); ++y)
@@ -171,8 +175,9 @@ namespace {
     if (animation.frames.empty())
       return false;
 
-    const auto palette = generate_palette(animation, 
-      (animation.max_colors ? std::min(animation.max_colors, 256) : 256));
+    const auto max_colors = (animation.max_colors ? 
+      std::min(animation.max_colors, 256) : 256);
+    const auto palette = generate_palette(animation, max_colors);
     auto bits = 0;
     for (auto c = palette.size() - 1; c; c >>= 1)
       ++bits;
@@ -205,15 +210,32 @@ namespace {
     if (!gif)
       return false;
 
-    for (const auto& frame : animation.frames) {
+    auto mutex = std::mutex{ };
+    auto frames_data = std::vector<Image>(animation.frames.size());
+    scheduler.for_each_parallel(animation.frames, 
+      [&](const Animation::Frame& frame) {
+        auto frame_data = Image{ };
+        if (palette.size() == max_colors) {
+          auto dithered = clone_image(frame.image);
+          floyd_steinberg_dithering(dithered.view<RGBA>(), palette);
+          frame_data = quantize_image(dithered.view<const RGBA>(), palette);
+        }
+        else {
+          frame_data = quantize_image(frame.image.view<RGBA>(), palette);
+        }
+        const auto lock = std::lock_guard(mutex);
+        const auto index = std::distance(animation.frames.data(), &frame);
+        frames_data[index] = std::move(frame_data);
+      });
+
+    for (auto i = 0u; i < animation.frames.size(); ++i) {
+      const auto& frame = animation.frames[i];
+      const auto& frame_data = frames_data[i];
       const auto delay = std::chrono::duration_cast<
         std::chrono::duration<uint16_t, std::ratio<1, 100>>>(
         std::chrono::duration<real>(frame.duration)).count();
 
-      auto dithered = clone_image(frame.image);
-      floyd_steinberg_dithering(dithered.view<RGBA>(), palette);
-      const auto mono = quantize_image(dithered.view<RGBA>(), palette);
-      std::memcpy(gif->frame, mono.data().data(), mono.size_bytes());
+      std::memcpy(gif->frame, frame_data.data().data(), frame_data.size_bytes());
       ge_add_frame(gif, delay);
     }
     ge_close_gif(gif);
