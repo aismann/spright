@@ -61,8 +61,8 @@ namespace {
     for (const auto& body : bodies) {
       auto& sprite = slice.sprites[i++];
       const auto position = cpBodyGetPosition(body.get());
-      sprite.trimmed_rect.x = to_int_round(position.x);
-      sprite.trimmed_rect.y = to_int_round(position.y);
+      sprite.trimmed_rect.x = round_to_int(position.x);
+      sprite.trimmed_rect.y = round_to_int(position.y);
     }
 
     // destroy space before shapes

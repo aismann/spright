@@ -59,14 +59,19 @@ void warning(std::string_view message, int line_number);
 bool has_warnings();
 
 template<typename T> 
-int to_int(const T& v) { 
-  static_assert(std::is_floating_point_v<T> || 
-    std::is_enum_v<T> || std::is_unsigned_v<T>);
+int to_int(const T& v) {
+  static_assert(std::is_enum_v<T> || std::is_unsigned_v<T>);
   return static_cast<int>(v);
 }
 
 template<typename T>
-int to_int_round(const T& v) {
+int floor_to_int(const T& v) {
+  static_assert(std::is_floating_point_v<T>);
+  return static_cast<int>(v);
+}
+
+template<typename T>
+int round_to_int(const T& v) {
   static_assert(std::is_floating_point_v<T>);
   return static_cast<int>(v + T{ 0.5 });
 }

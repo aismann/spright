@@ -169,7 +169,7 @@ namespace {
     };
     const auto int_remainder = [](real value) {
       const auto i = std::floor(value);
-      return std::pair(to_int(i), static_cast<float>(value - i));
+      return std::pair(floor_to_int(i), static_cast<float>(value - i));
     };
     const auto [ix, rx] = int_remainder(point.x);
     const auto [iy, ry] = int_remainder(point.y);
@@ -199,8 +199,8 @@ namespace {
     const auto my = std::max(std::max(std::max(p0.y, p1.y), p2.y), p3.y);
 
     // make destination size even/odd like source
-    const auto dx = to_int_round(mx * 2.0);
-    const auto dy = to_int_round(my * 2.0);
+    const auto dx = round_to_int(mx * 2.0);
+    const auto dy = round_to_int(my * 2.0);
     auto dest = Image(source.type(),
       dx + (source.width() % 2 != dx % 2 ? 1 : 0), 
       dy + (source.height() % 2 != dy % 2 ? 1 : 0));
@@ -230,7 +230,7 @@ namespace {
   Image rotate_image_nearest(ImageView<const RGBAF> image_rgbaf, real angle, const RGBAF& background_rgbaf) {
     return rotate_image_sample(image_rgbaf, angle, 
       [&](const PointF& pos) {
-        const auto point = Point(to_int_round(pos.x), to_int_round(pos.y));
+        const auto point = Point(round_to_int(pos.x), round_to_int(pos.y));
         return (containing(image_rgbaf.bounds(), point) ? 
           image_rgbaf.value_at(point) : background_rgbaf);
       });
@@ -577,8 +577,8 @@ Image get_gray_levels(const Image& image, const Rect& rect) {
 }
 
 Image resize_image(const Image& image, const SizeF& scale, ScaleFilter filter) {
-  const auto width = to_int_round(image.width() * scale.x);
-  const auto height = to_int_round(image.height() * scale.y);
+  const auto width = round_to_int(image.width() * scale.x);
+  const auto height = round_to_int(image.height() * scale.y);
   if (width == image.width() && height == image.height())
     return clone_image(image);
 

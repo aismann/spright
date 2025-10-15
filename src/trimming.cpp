@@ -52,8 +52,8 @@ namespace {
       int threshold) {
     const auto sample = [](cpVect point, void *data) -> cpFloat {
       const auto& image_mono = *static_cast<ImageView<const RGBA::Channel>*>(data);
-      const auto x = to_int(point.x - 0.5);
-      const auto y = to_int(point.y - 0.5);
+      const auto x = floor_to_int(point.x - 0.5);
+      const auto y = floor_to_int(point.y - 0.5);
       if (x < 0 || x >= image_mono.width() || 
           y < 0 || y >= image_mono.height())
         return 0;

@@ -169,8 +169,8 @@ namespace {
           std::filesystem::relative(texture.filename, settings.output_path));
       if (!empty(output.scale)) {
         json_texture["scale"] = std::max(output.scale.x, output.scale.y);
-        json_texture["width"] = to_int_round(slice.width * output.scale.x);
-        json_texture["height"] = to_int_round(slice.height * output.scale.y);
+        json_texture["width"] = round_to_int(slice.width * output.scale.x);
+        json_texture["height"] = round_to_int(slice.height * output.scale.y);
       }
       json_texture["map"] = (texture.map_index < 0 ?
         texture.output->default_map_suffix :
