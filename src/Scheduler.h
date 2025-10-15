@@ -5,6 +5,7 @@
 #include <functional>
 #include <atomic>
 #include <vector>
+#include <utility>
 #include <list>
 
 class Scheduler {
@@ -44,7 +45,7 @@ public:
   }
 
   template<typename F> // F(size_t)
-  void for_each_parallel(F&& function, size_t count) {
+  void for_each_parallel(size_t count, F&& function) {
     if (!count)
       return;
 
@@ -77,14 +78,14 @@ public:
   template<typename It, typename F> // F(*It)
   void for_each_parallel(It begin, It end, F&& function) {
     const auto count = static_cast<size_t>(std::distance(begin, end));
-    for_each_parallel(
+    for_each_parallel(count,
       [begin, function = std::forward<F>(function)](size_t index) {
         function(*std::next(begin, static_cast<int>(index)));
-      }, count);
+      });
   }
 
   template<typename R, typename F> // F(*It)
-  void for_each_parallel(R&& range, F&& function) {
+  auto for_each_parallel(R&& range, F&& function) -> std::enable_if_t<!std::is_integral_v<R>> {
     for_each_parallel(begin(range), end(range), std::move(function));
   }
 

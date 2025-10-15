@@ -17,51 +17,68 @@ namespace {
   // https://en.wikipedia.org/wiki/Median_cut
   std::vector<RGBA> median_cut_reduction(RGBASpan image, int max_colors) {
     struct Bucket {
-      RGBA::Channel max_channel_range;
       RGBASpan colors;
+      RGBA::Channel max_channel_range;
     };
-  
-    auto buckets = std::vector<Bucket>();
-    const auto insert_bucket = [&](RGBASpan colors) {
+
+    const auto sort_bucket = [](Bucket& bucket) {
       // compute channel with maximum range
+      auto& colors = bucket.colors;
+      auto min = colors.front();
+      auto max = colors.front();
+      for (const auto& c : colors) {
+        for (auto i = 0; i < 4; ++i) {
+          min.channel(i) = std::min(min.channel(i), c.channel(i));
+          max.channel(i) = std::max(max.channel(i), c.channel(i));
+        }
+      }
       auto max_channel = 0;
       auto max_channel_range = RGBA::Channel{ };
       for (auto i = 0; i < 4; ++i) {
-        const auto [min, max] = std::minmax_element(colors.begin(), colors.end(),
-          [&](const RGBA& a, const RGBA& b) { return a.channel(i) < b.channel(i); });
-        const auto channel_range = RGBA::to_channel(max->channel(i) - min->channel(i));
+        const auto channel_range = RGBA::to_channel(max.channel(i) - min.channel(i));
         if (channel_range > max_channel_range) {
           max_channel_range = channel_range;
           max_channel = i;
         }
       }
+      bucket.max_channel_range = max_channel_range;
 
       // sort colors by this channel
-      std::sort(colors.begin(), colors.end(), 
-        [&](const RGBA& a, const RGBA& b) { 
-          return a.channel(max_channel) < b.channel(max_channel); 
+      std::sort(colors.begin(), colors.end(),
+        [&](const RGBA& a, const RGBA& b) {
+          return a.channel(max_channel) < b.channel(max_channel);
         });
-
-      // insert sorted in bucket list
-      auto bucket = Bucket{ max_channel_range, colors };
-      buckets.insert(std::lower_bound(buckets.begin(), buckets.end(), bucket,
-        [](const Bucket& a, const Bucket& b) {
-          return (a.max_channel_range < b.max_channel_range);
-        }), bucket);
     };
 
+    auto buckets = std::vector<Bucket>();
+    buckets.reserve(to_unsigned(max_colors));
+
     // start with one bucket containing whole image
-    insert_bucket(image);
+    buckets.push_back({ image });
+    sort_bucket(buckets.back());
 
     while (to_int(buckets.size()) < max_colors) {
       // split bucket with maximum range
-      auto [range, colors] = buckets.back();
-      if (range == 0)
+      if (buckets.back().max_channel_range == 0)
         break;
-
+      const auto colors = buckets.back().colors;
       buckets.pop_back();
-      insert_bucket(colors.subspan(0, colors.size() / 2));
-      insert_bucket(colors.subspan(colors.size() / 2));
+
+      auto half_buckets = std::array<Bucket, 2>{ };
+      scheduler.for_each_parallel(2, [&](size_t index) {
+        half_buckets[index].colors =
+          (index == 0 ?
+            colors.subspan(0, colors.size() / 2) :
+            colors.subspan(colors.size() / 2));
+        sort_bucket(half_buckets[index]);
+      });
+
+      // insert sorted in bucket list
+      for (const auto& half_bucket : half_buckets)
+        buckets.insert(std::lower_bound(buckets.begin(), buckets.end(), half_bucket,
+          [](const Bucket& a, const Bucket& b) {
+            return (a.max_channel_range < b.max_channel_range);
+          }), half_bucket);
     }
 
     // get average colors of buckets
@@ -105,10 +122,10 @@ namespace {
 
   // https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
   void floyd_steinberg_dithering(ImageView<RGBA> image_rgba, const Palette& palette) {
-    const auto diff = [](const RGBA::Channel& a, const RGBA::Channel& b) { 
+    const auto diff = [](const RGBA::Channel& a, const RGBA::Channel& b) {
       return static_cast<int>(a) - static_cast<int>(b);
     };
-    const auto saturate = [](int value) { 
+    const auto saturate = [](int value) {
       return RGBA::to_channel(std::clamp(value, 0, 255));
     };
     const auto w = image_rgba.width();
@@ -122,7 +139,7 @@ namespace {
         const auto error_g = diff(old_color.g, color.g);
         const auto error_b = diff(old_color.b, color.b);
         const auto apply_error = [&](int x, int y, int fs) {
-          auto& color = image_rgba.value_at({ 
+          auto& color = image_rgba.value_at({
             std::clamp(x, 0, w - 1), std::clamp(y, 0, h - 1)
           });
           color.r = saturate(color.r + error_r * fs / 16);
@@ -144,19 +161,18 @@ namespace {
   }
 
   Palette generate_palette(const Animation& animation, int max_colors) {
-    auto merged_size = size_t{ };
-    for (const auto& frame : animation.frames)
-      merged_size += frame.image.data().size_bytes();
-    auto merged = std::make_unique<std::byte[]>(merged_size);
-    auto pos = merged.get();
+    if (animation.frames.empty())
+      return {};
+    const auto width = animation.frames[0].image.width();
+    const auto height = animation.frames[0].image.height();
+    const auto count = to_int(animation.frames.size());
+    auto merged = Image(ImageType::RGBA, width, height * count);
+    auto pos = merged.data().data();
     for (const auto& frame : animation.frames) {
       std::memcpy(pos, frame.image.data().data(), frame.image.size_bytes());
       pos += frame.image.size_bytes();
     }
-    return median_cut_reduction({
-        reinterpret_cast<RGBA*>(merged.get()), 
-        merged_size / sizeof(RGBA)
-      }, max_colors);
+    return generate_palette(merged, max_colors);
   }
 
   Image quantize_image(ImageView<const RGBA> image_rgba, const Palette& palette) {
@@ -165,7 +181,7 @@ namespace {
     for (auto y = 0; y < image_rgba.height(); ++y)
       for (auto x = 0; x < image_rgba.width(); ++x)
         out_mono.value_at({ x, y }) = RGBA::to_channel(
-          index_of_closest_palette_color(palette, 
+          index_of_closest_palette_color(palette,
             image_rgba.value_at({ x, y })));
     return out;
   }
@@ -175,7 +191,7 @@ namespace {
     if (animation.frames.empty())
       return false;
 
-    const auto max_colors = (animation.max_colors ? 
+    const auto max_colors = (animation.max_colors ?
       std::min(animation.max_colors, 256) : 256);
     const auto palette = generate_palette(animation, max_colors);
     auto bits = 0;
@@ -212,10 +228,10 @@ namespace {
 
     auto mutex = std::mutex{ };
     auto frames_data = std::vector<Image>(animation.frames.size());
-    scheduler.for_each_parallel(animation.frames, 
+    scheduler.for_each_parallel(animation.frames,
       [&](const Animation::Frame& frame) {
         auto frame_data = Image{ };
-        if (palette.size() == max_colors) {
+        if (to_int(palette.size()) == max_colors) {
           auto dithered = clone_image(frame.image);
           floyd_steinberg_dithering(dithered.view<RGBA>(), palette);
           frame_data = quantize_image(dithered.view<const RGBA>(), palette);
@@ -224,7 +240,7 @@ namespace {
           frame_data = quantize_image(frame.image.view<RGBA>(), palette);
         }
         const auto lock = std::lock_guard(mutex);
-        const auto index = std::distance(animation.frames.data(), &frame);
+        const auto index = to_unsigned(std::distance(animation.frames.data(), &frame));
         frames_data[index] = std::move(frame_data);
       });
 
@@ -271,7 +287,7 @@ Image load_image(const std::filesystem::path& filename) {
     std::fclose(file);
   }
   if (!data)
-    throw std::runtime_error("loading file '" + 
+    throw std::runtime_error("loading file '" +
       path_to_utf8(filename) + "' failed");
 
   return Image(ImageType::RGBA, width, height, data);
@@ -302,7 +318,7 @@ void save_image(const Image& image, const std::filesystem::path& path) {
 
     stbi_write_tga_with_rle = 1;
     if (extension == ".tga")
-      return stbi_write_tga(filename.c_str(), 
+      return stbi_write_tga(filename.c_str(),
         image.width(), image.height(), comp, image_rgba.values());
 
     error("unsupported image file format '", filename, "'");
