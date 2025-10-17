@@ -50,12 +50,14 @@ namespace {
 
     using TagKey = std::string;
     using TagValue = std::string;
+    using SheetIndex = int;
     using InputIndex = int;
     using SpriteIndex = int;
     using SliceIndex = int;
     using SourceIndex = int;
     auto tags = std::map<TagKey, std::map<TagValue, std::vector<SpriteIndex>>>();
     auto source_indices = std::map<ImageFilePtr, SourceIndex>();
+    auto sheet_slices = std::map<SheetIndex, std::vector<const Slice*>>();
     auto slice_sprites = std::map<SliceIndex, std::vector<SpriteIndex>>();
     auto sprite_on_slice = std::map<SpriteIndex, SliceIndex>();
     auto sprites_by_index = std::map<SpriteIndex, const Sprite*>();
@@ -117,11 +119,21 @@ namespace {
         json_tag[value] = sprite_indices;
     }
 
-    auto& json_slices = json["slices"];
-    json_slices = nlohmann::json::array();
-    for (const auto& slice : slices) {
-      auto& json_slice = json_slices.emplace_back();
-      json_slice["spriteIndices"] = slice_sprites[slice.index];
+    for (const auto& slice : slices)
+      sheet_slices[slice.sheet->index].push_back(&slice);
+
+    auto& json_sheets = json["sheets"];
+    json_sheets = nlohmann::json::array();
+    for (const auto& [sheet_index, slices] : sheet_slices) {
+      const auto& sheet = slices.front()->sheet;
+      auto& json_sheet = json_sheets.emplace_back();
+      json_sheet["id"] = sheet->id;
+      auto& json_slices = json_sheet["slices"];
+      json_slices = nlohmann::json::array();
+      for (auto* slice : slices) {
+        auto& json_slice = json_slices.emplace_back();
+        json_slice["spriteIndices"] = slice_sprites[slice->index];
+      }
     }
 
     auto& json_sources = json["sources"];
@@ -142,14 +154,14 @@ namespace {
     for (const auto& input : inputs) {
       auto& json_input = json_inputs.emplace_back();
       json_input["filename"] = input.source_filenames;
-      auto json_sources = nlohmann::json::array();
+      auto& json_sources = json_input["sources"];
+      json_sources = nlohmann::json::array();
       for (const auto& source : input.sources) {
         auto& json_source = json_sources.emplace_back();
         const auto source_index = source_indices[source];
         json_source["index"] = source_index;
         json_source["spriteIndices"] = input_source_sprites[{ input.index, source_index }];
       }
-      json_input["sources"] = std::move(json_sources);
     }
 
     auto& json_textures = json["textures"];
@@ -161,7 +173,8 @@ namespace {
       auto& json_texture = json_textures.emplace_back();
       const auto& slice = *texture.slice;
       const auto& output = *texture.output;
-      json_texture["sliceIndex"] = texture.slice->index;
+      json_texture["sheetIndex"] = slice.sheet->index;
+      json_texture["sliceIndex"] = texture.slice->sheet_index;
       json_texture["spriteIndices"] = slice_sprites[slice.index];
       json_texture["path"] = path_to_utf8(settings.output_path);
       json_texture["filename"] = path_to_utf8(
