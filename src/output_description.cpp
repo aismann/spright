@@ -1,20 +1,21 @@
 
 #include "output.h"
+
+#define INJA_DATA_TYPE nlohmann::ordered_json
 #include "inja/inja.hpp"
-#include <fstream>
 
 namespace spright {
 
 namespace {
-  nlohmann::json json_point(const PointF& point) {
-    auto json_point = nlohmann::json::object();
+  inja::json json_point(const PointF& point) {
+    auto json_point = inja::json::object();
     json_point["x"] = point.x;
     json_point["y"] = point.y;
     return json_point;
   }
 
-  nlohmann::json json_compact_point_list(const std::vector<PointF>& points) {
-    auto list = nlohmann::json::array();
+  inja::json json_compact_point_list(const std::vector<PointF>& points) {
+    auto list = inja::json::array();
     for (const auto& point : points) {
       list.push_back(point.x);
       list.push_back(point.y);
@@ -22,8 +23,8 @@ namespace {
     return list;
   }
 
-  nlohmann::json json_rect(const Rect& rect) {
-    auto json_rect = nlohmann::json::object();
+  inja::json json_rect(const Rect& rect) {
+    auto json_rect = inja::json::object();
     json_rect["x"] = rect.x;
     json_rect["y"] = rect.y;
     json_rect["w"] = rect.w;
@@ -31,8 +32,8 @@ namespace {
     return json_rect;
   }
 
-  nlohmann::json json_variant_map(const VariantMap& map) {
-    auto json_map = nlohmann::json::object();
+  inja::json json_variant_map(const VariantMap& map) {
+    auto json_map = inja::json::object();
     for (const auto& [key, value] : map)
       std::visit([&, k = &key](const auto& v) { 
         json_map[*k] = v;
@@ -40,7 +41,7 @@ namespace {
     return json_map;
   }
 
-  nlohmann::json get_json_description(
+  inja::json get_json_description(
       const Settings& settings,
       const std::vector<Input>& inputs, 
       const std::vector<Sprite>& sprites,
@@ -68,9 +69,9 @@ namespace {
       for (const auto& sprite : slice.sprites)
         sprite_on_slice[sprite.index] = slice.index;
 
-    auto json = nlohmann::json{ };
+    auto json = inja::json{ };
     auto& json_sprites = json["sprites"];
-    json_sprites = nlohmann::json::array();
+    json_sprites = inja::json::array();
     for (const auto& [sprite_index, sprite] : sprites_by_index) {
       auto& json_sprite = json_sprites.emplace_back();
       json_sprite["index"] = sprite_index;
@@ -112,7 +113,7 @@ namespace {
     }
 
     auto& json_tags = json["tags"];
-    json_tags = nlohmann::json::object();
+    json_tags = inja::json::object();
     for (const auto& [key, value_sprite_indices] : tags) {
       auto& json_tag = json_tags[key];
       for (const auto& [value, sprite_indices] : value_sprite_indices)
@@ -123,13 +124,13 @@ namespace {
       sheet_slices[slice.sheet->index].push_back(&slice);
 
     auto& json_sheets = json["sheets"];
-    json_sheets = nlohmann::json::array();
+    json_sheets = inja::json::array();
     for (const auto& [sheet_index, slices] : sheet_slices) {
       const auto& sheet = slices.front()->sheet;
       auto& json_sheet = json_sheets.emplace_back();
       json_sheet["id"] = sheet->id;
       auto& json_slices = json_sheet["slices"];
-      json_slices = nlohmann::json::array();
+      json_slices = inja::json::array();
       for (auto* slice : slices) {
         auto& json_slice = json_slices.emplace_back();
         json_slice["spriteIndices"] = slice_sprites[slice->index];
@@ -137,7 +138,7 @@ namespace {
     }
 
     auto& json_sources = json["sources"];
-    json_sources = nlohmann::json::array();
+    json_sources = inja::json::array();
     auto sources_by_index = std::map<SourceIndex, ImageFilePtr>();
     for (const auto& [source, index] : source_indices)
       sources_by_index[index] = source;
@@ -150,12 +151,12 @@ namespace {
     }
 
     auto& json_inputs = json["inputs"];
-    json_inputs = nlohmann::json::array();
+    json_inputs = inja::json::array();
     for (const auto& input : inputs) {
       auto& json_input = json_inputs.emplace_back();
       json_input["filename"] = input.source_filenames;
       auto& json_sources = json_input["sources"];
-      json_sources = nlohmann::json::array();
+      json_sources = inja::json::array();
       for (const auto& source : input.sources) {
         auto& json_source = json_sources.emplace_back();
         const auto source_index = source_indices[source];
@@ -165,7 +166,7 @@ namespace {
     }
 
     auto& json_textures = json["textures"];
-    json_textures = nlohmann::json::array();
+    json_textures = inja::json::array();
     for (const auto& texture : textures) {
       if (texture.filename.empty())
         continue;
@@ -233,7 +234,7 @@ namespace {
 
   void output_description(std::ostream& os,
       const std::filesystem::path& template_filename,
-      const nlohmann::json& json) {
+      const inja::json& json) {
     if (!template_filename.empty()) {
       auto env = setup_inja_environment();
       env.render_to(os, env.parse_template(
@@ -425,7 +426,7 @@ void output_descriptions(
     const std::vector<Texture>& textures,
     const VariantMap& variables) {
 
-  auto json = std::optional<nlohmann::json>();
+  auto json = std::optional<inja::json>();
 
   for (const auto& description : descriptions) {
     if (description.filename.empty())
@@ -456,12 +457,12 @@ void output_descriptions(
         const auto [slice_sprites, slice_textures] =
           filter_by_slice(slice.index, sole_slice, sprites, textures);
         
-        const auto slice_json = get_json_description(settings,
+        const auto json_slice = get_json_description(settings,
           inputs, slice_sprites, { sole_slice }, slice_textures, variables);
 
         const auto filename = filenames.get_nth_filename(slice.index);
         auto ss = std::ostringstream();
-        output_description(ss, description.template_filename, slice_json);
+        output_description(ss, description.template_filename, json_slice);
         update_textfile(filename, ss.str());
       }
     }
