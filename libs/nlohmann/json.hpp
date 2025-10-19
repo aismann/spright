@@ -18803,6 +18803,23 @@ class serializer
     serializer& operator=(serializer&&) = delete;
     ~serializer() = default;
 
+    bool ends_with(std::string_view value, std::string_view part) {
+    return value.size() >= part.size() &&
+        value.substr(value.size() - part.size()) == part;
+    }
+
+    bool dump_compact(const BasicJsonType& val) {
+        if (val.m_data.m_type != value_t::string)
+            return false;
+        for (auto name : { "vertices", "pivot", "rect" })
+            if (*val.m_data.m_value.string == name)
+                return true;
+        for (auto name : { "Rect", "Indices" })
+            if (ends_with(*val.m_data.m_value.string, name))
+                return true;
+        return false;
+    }
+
     /*!
     @brief internal implementation of the serialization function
 
@@ -18860,7 +18877,7 @@ class serializer
                         o->write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\": ", 3);
-                        dump(i->second, true, ensure_ascii, indent_step, new_indent);
+                        dump(i->second, !dump_compact(i->first), ensure_ascii, indent_step, new_indent);
                         o->write_characters(",\n", 2);
                     }
 
@@ -18871,7 +18888,7 @@ class serializer
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\": ", 3);
-                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
+                    dump(i->second, !dump_compact(i->first), ensure_ascii, indent_step, new_indent);
 
                     o->write_character('\n');
                     o->write_characters(indent_string.c_str(), current_indent);
