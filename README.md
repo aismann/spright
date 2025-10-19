@@ -433,6 +433,7 @@ The following templates are already available:
 | Target                                            | Template                                       |
 | ------------------------------------------------- | ---------------------------------------------- |
 | C++                                               | [cpp.inja](templates/cpp.inja)         |
+| CSS                                               | [css.inja](templates/css.inja)         |
 | [Cocos2d-x](https://github.com/cocos2d/cocos2d-x) | [cocos2dx.inja](templates/cocos2dx.inja) |
 | [Phaser 3](https://github.com/photonstorm/phaser) | [phaser.inja](templates/phaser.inja)   |
 | [Phaser 2](https://github.com/photonstorm/phaser) | [phaser2.inja](templates/phaser2.inja) |

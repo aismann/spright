@@ -1,0 +1,16 @@
+## for texture in textures
+{% set sheet=at(sheets, texture.sheetIndex) %}
+{{ sheet.id }} {
+	background-image: url('{{ texture.filename }}');
+	background-repeat: no-repeat;
+	{{ style }}
+}
+## for spriteIndex in texture.spriteIndices
+{% set sprite=at(sprites, spriteIndex) %}
+.{{ sheet.id }}.{{ sprite.id }} {
+	width: {{ sprite.trimmedRect.w }}px;
+	height: {{ sprite.trimmedRect.h }}px;
+	background-position: -{{ sprite.trimmedRect.x }}px -{{ sprite.trimmedRect.y }}px;
+}
+## endfor
+## endfor
