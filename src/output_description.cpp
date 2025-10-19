@@ -88,8 +88,7 @@ namespace {
       json_sprite["inputSpriteIndex"] = sprite->input_sprite_index;
       json_sprite["sourceIndex"] = source_index;
       json_sprite["sourceRect"] = json_rect(sprite->source_rect);
-      json_sprite["tags"] = sprite->tags;
-      json_sprite["data"] = json_variant_map(sprite->data);
+
       input_source_sprites[{ sprite->input_index, source_index }].push_back(sprite_index);
 
       for (const auto& [key, value] : sprite->tags)
@@ -110,6 +109,8 @@ namespace {
         json_sprite["vertices"] = json_compact_point_list(sprite->vertices);
         slice_sprites[slice_index].push_back(sprite_index);
       }
+      json_sprite["tags"] = sprite->tags;
+      json_sprite["data"] = json_variant_map(sprite->data);
     }
 
     auto& json_tags = json["tags"];
@@ -176,19 +177,19 @@ namespace {
       const auto& output = *texture.output;
       json_texture["sheetIndex"] = slice.sheet->index;
       json_texture["sliceIndex"] = texture.slice->sheet_index;
-      json_texture["spriteIndices"] = slice_sprites[slice.index];
       json_texture["path"] = path_to_utf8(settings.output_path);
       json_texture["filename"] = path_to_utf8(
         settings.output_path.empty() ? texture.filename :
           std::filesystem::relative(texture.filename, settings.output_path));
       if (!empty(output.scale)) {
-        json_texture["scale"] = std::max(output.scale.x, output.scale.y);
         json_texture["width"] = round_to_int(slice.width * output.scale.x);
         json_texture["height"] = round_to_int(slice.height * output.scale.y);
+        json_texture["scale"] = std::max(output.scale.x, output.scale.y);
       }
       json_texture["map"] = (texture.map_index < 0 ?
         texture.output->default_map_suffix :
         texture.output->map_suffixes.at(to_unsigned(texture.map_index)));
+      json_texture["spriteIndices"] = slice_sprites[slice.index];
     }
 
     for (const auto& [key, value] : variables)
