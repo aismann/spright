@@ -190,7 +190,8 @@ static const cpShapeClass polyClass = {
 cpPolyShape *
 cpPolyShapeInit(cpPolyShape *poly, cpBody *body, int count, const cpVect *verts, cpTransform transform, cpFloat radius)
 {
-	cpVect *hullVerts = (cpVect *)alloca(count*sizeof(cpVect));
+	// allocate one more to satify AddressSanitizer
+	cpVect *hullVerts = (cpVect *)alloca((count+1)*sizeof(cpVect));
 	
 	// Transform the verts before building the hull in case of a negative scale.
 	for(int i=0; i<count; i++) hullVerts[i] = cpTransformPoint(transform, verts[i]);

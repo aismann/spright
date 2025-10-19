@@ -47,6 +47,12 @@ set(SOURCES
 if(NOT MSVC)
     set_source_files_properties(${SOURCES}
        PROPERTIES COMPILE_FLAGS  "-Wall -Wextra -Wsign-conversion -Wconversion -Wno-missing-field-initializers")
+
+    option(ENABLE_ADDRESS_SANITIZER "Enable Address Sanitizer" FALSE)
+    if(ENABLE_ADDRESS_SANITIZER)
+        add_compile_options(-fsanitize=address)
+        add_link_options(-fsanitize=address)
+    endif()
 endif()
 
 file(GLOB CHIPMUNK_SOURCES libs/chipmunk/src/*.c)
