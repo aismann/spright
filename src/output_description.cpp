@@ -1,6 +1,8 @@
 
 #include "output.h"
 
+// nlohmann::ordered_map was patched to use a deque as Container, since inja
+// does not support containers which invalidate iterators on insertion
 #define INJA_DATA_TYPE nlohmann::ordered_json
 #include "inja/inja.hpp"
 
