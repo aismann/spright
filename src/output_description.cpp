@@ -156,12 +156,12 @@ namespace {
     for (const auto& input : inputs) {
       auto& json_input = json_inputs.emplace_back();
       json_input["filename"] = input.source_filenames;
-      auto& json_sources = json_input["sources"];
+      auto& json_sources = json_input["sourceSprites"];
       json_sources = inja::json::array();
       for (const auto& source : input.sources) {
         auto& json_source = json_sources.emplace_back();
         const auto source_index = source_indices[source];
-        json_source["index"] = source_index;
+        json_source["sourceIndex"] = source_index;
         json_source["spriteIndices"] = input_source_sprites[{ input.index, source_index }];
       }
     }
