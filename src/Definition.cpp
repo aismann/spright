@@ -324,8 +324,8 @@ void apply_definition(Definition definition,
   const auto check_scale_filter = [&]() -> ScaleFilter {
     const auto string = check_string();
     if (const auto index = index_of(string, 
-        { "default", "box", "triangle", "cubicspline",
-            "catmullrom", "mitchell", "pointsample" }); index >= 0)
+        { "default", "box", "bilinear", "cubicspline",
+            "catmullrom", "mitchell", "nearest" }); index >= 0)
       return static_cast<ScaleFilter>(index);
     error("invalid resize filter '", string, "'");
     return { };
