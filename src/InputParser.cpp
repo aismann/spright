@@ -721,7 +721,7 @@ void InputParser::parse(std::istream& input,
     }
 
     auto line = ltrim(buffer);
-    const auto level = to_int(buffer.size() - line.size());
+    auto level = to_int(buffer.size() - line.size());
     line = trim_comment(line);
     line = rtrim(line);
 
@@ -734,7 +734,7 @@ void InputParser::parse(std::istream& input,
 
     pop_scope_stack(level);
 
-    handle_exception([&]() {
+    const auto parse_line = [&](std::string_view line) {
       m_warning_line_number = line_number;
 
       split_arguments(line, &arguments);
@@ -775,6 +775,18 @@ void InputParser::parse(std::istream& input,
       // set definition when it was successfully applied
       // to disable scope_ends() on "errors as warnings"
       state.definition = definition;
+    };
+    
+    handle_exception([&]() {
+      auto first_part = true;
+      for_each_part(line, ';', false,
+        [&](std::string_view part) {
+          parse_line(part);
+
+          // indent other parts of line by one level
+          if (std::exchange(first_part, false))
+            ++level;
+        });
     });
 
     if (m_settings.mode == Mode::autocomplete) {

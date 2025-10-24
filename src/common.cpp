@@ -352,6 +352,23 @@ void split_expression(std::string_view str, std::vector<std::string_view>* resul
   }
 }
 
+std::string::size_type find_not_in_string(std::string_view string, char chr, 
+    std::string::size_type offset) {
+  for (auto p = offset; p < string.size(); ++p) {
+    const auto c = string[p];
+    if (c == '\'' || c == '\"') {
+      ++p;
+      for (; p < string.size() && string[p] != c; )
+        ++p;
+    }
+    else {
+      if (c == chr)
+        return p;
+    }
+  }
+  return std::string::npos;
+}
+
 std::string read_textfile(const std::filesystem::path& filename) {
   auto file = std::ifstream(filename, std::ios::in | std::ios::binary);
   if (!file.good())

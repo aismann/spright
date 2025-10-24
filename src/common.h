@@ -120,6 +120,8 @@ void split_arguments(LStringView str, std::vector<std::string_view>* result);
 std::pair<std::string_view, int> split_name_number(LStringView str);
 void join_expressions(std::vector<std::string_view>* arguments);
 void split_expression(std::string_view str, std::vector<std::string_view>* result);
+std::string::size_type find_not_in_string(std::string_view string, char chr, 
+    std::string::size_type offset = 0);
 std::string read_textfile(const std::filesystem::path& filename);
 std::string base64_encode_file(const std::filesystem::path& filename);
 void write_textfile(const std::filesystem::path& filename, std::string_view text);
@@ -134,6 +136,22 @@ void replace_variables(std::string& expression, const VariantMap& variables);
 void replace_variables(std::filesystem::path& path, const VariantMap& variables);
 std::string variant_to_string(const Variant& variant);
 std::string make_identifier(std::string string);
+
+template<typename F>
+void for_each_part(std::string_view string, char separator, bool keep_empty, F&& func) {
+  auto pos = std::string::size_type{ 0 };
+  auto begin = pos;
+  for (;;) {
+    pos = find_not_in_string(string, separator, pos);
+    const auto end = (pos == std::string::npos ? string.size() : pos);
+    if (keep_empty || begin != end)
+      func(string.substr(begin, end - begin));
+    if (pos == std::string::npos)
+      break;
+    ++pos;
+    begin = pos;
+  }
+}
 
 constexpr real deg_to_rad(real deg) { return deg * (pi / 180.0); }
 constexpr int floor(int v, int q) { return (v / q) * q; };

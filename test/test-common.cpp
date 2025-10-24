@@ -24,6 +24,24 @@ TEST_CASE("trim") {
   CHECK(trim_comment(R"(a '"' # comment)") == R"(a '"' )");
 }
 
+TEST_CASE("find_not_in_string") {
+  CHECK(find_not_in_string(";", ';') == 0);
+  CHECK(find_not_in_string(" ;", ';') == 1);
+  CHECK(find_not_in_string("';", ';') == std::string::npos);
+  CHECK(find_not_in_string("';';", ';') == 3);
+  CHECK(find_not_in_string("';\"';", ';') == 4);
+}
+
+TEST_CASE("for_each_part") {
+  const auto check = [](std::string_view string, bool keep_empty, const std::vector<std::string_view>& parts) {
+    auto result = std::vector<std::string_view>();
+    for_each_part(string, ';', keep_empty, [&](auto p) { result.emplace_back(p); });
+    CHECK(result == parts);
+  };
+  check("a;ab;;;'abc;'abcd", false, { "a", "ab", "'abc;'abcd" });
+  check("a;ab;;;'abc;'abcd;", true, { "a", "ab", "", "", "'abc;'abcd", "" });
+}
+
 TEST_CASE("join_expressions") {
   auto arguments = std::vector<std::string_view>{ };
   split_arguments(" a  + b ", &arguments);

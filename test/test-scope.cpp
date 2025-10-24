@@ -378,3 +378,20 @@ TEST_CASE("scope - Transform Output") {
   CHECK(sprites[0].sheet->outputs[0]->transforms.size() == 1);
   CHECK(sprites[0].sheet->outputs[1]->transforms.size() == 2);
 }
+
+TEST_CASE("scope - Transform Semicolon") {
+  auto parser = parse(R"(
+    input "test/Items.png"
+      grid 16 16
+      sprite
+      duplicate; rotate 15; # comment
+      duplicate; rotate 30; scale 2# comment
+      duplicate; rotate 45
+  )");
+  const auto& sprites = parser.sprites();
+  REQUIRE(sprites.size() == 4);
+  CHECK(sprites[0].transforms.size() == 0);
+  CHECK(sprites[1].transforms.size() == 1);
+  CHECK(sprites[2].transforms.size() == 2);
+  CHECK(sprites[3].transforms.size() == 1);
+}
