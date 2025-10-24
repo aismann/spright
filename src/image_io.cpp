@@ -297,9 +297,8 @@ void save_image(const Image& image, const std::filesystem::path& path) {
   if (!path.parent_path().empty())
     std::filesystem::create_directories(path.parent_path());
   const auto filename = path_to_utf8(path);
-
+  const auto extension = to_lower(path_to_utf8(path.extension()));
   const auto result = [&]() -> bool {
-    const auto extension = to_lower(path_to_utf8(path.extension()));
     if (extension == ".gif") {
       auto animation = Animation{ };
       animation.frames.push_back({ 0, clone_image(image), 0.0 });
@@ -308,7 +307,7 @@ void save_image(const Image& image, const std::filesystem::path& path) {
 
     const auto comp = to_int(sizeof(RGBA));
     const auto image_rgba = image.view<RGBA>();
-    if (extension == ".png")
+    if (extension == ".png" || extension.empty())
       return stbi_write_png(filename.c_str(),
         image.width(), image.height(), comp, image_rgba.values(), 0);
 
@@ -332,7 +331,13 @@ void save_animation(const Animation& animation, const std::filesystem::path& pat
     std::filesystem::create_directories(path.parent_path());
   const auto filename = path_to_utf8(path);
   const auto extension = to_lower(path_to_utf8(path.extension()));
-  if (!(extension == ".gif" && write_gif(filename, animation)))
+  const auto result = [&]() -> bool {
+    if (extension == ".gif")
+      return write_gif(filename, animation);
+
+    error("unsupported animation file format '", filename, "'");
+  }();
+  if (!result)
     error("writing file '", filename, "' failed");
 }
 
