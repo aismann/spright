@@ -1,9 +1,10 @@
 
 #include "output.h"
 
-// nlohmann::ordered_map was patched to use a deque as Container, since inja
-// does not support containers which invalidate iterators on insertion
+// nlohmann::ordered_map was patched to use a sfl::segmented_vector as Container,
+// since inja does not support containers which invalidate iterators on insertion
 #define INJA_DATA_TYPE nlohmann::ordered_json
+#define JSON_HAS_THREE_WAY_COMPARISON 0
 #include "inja/inja.hpp"
 
 namespace spright {

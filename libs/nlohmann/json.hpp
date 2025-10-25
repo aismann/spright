@@ -19748,7 +19748,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <type_traits> // enable_if, is_convertible
 #include <utility> // pair
 #include <vector> // vector
-#include <deque>
+#include "sfl/segmented_vector.hpp"
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -19761,11 +19761,11 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 /// for use within nlohmann::basic_json<ordered_map>
 template <class Key, class T, class IgnoredLess = std::less<Key>,
           class Allocator = std::allocator<std::pair<const Key, T>>>
-              struct ordered_map : std::deque<std::pair<const Key, T>, Allocator>
+              struct ordered_map : sfl::segmented_vector<std::pair<const Key, T>, 32, Allocator>
 {
     using key_type = Key;
     using mapped_type = T;
-    using Container = std::deque<std::pair<const Key, T>, Allocator>;
+    using Container = sfl::segmented_vector<std::pair<const Key, T>, 32, Allocator>;
     using iterator = typename Container::iterator;
     using const_iterator = typename Container::const_iterator;
     using size_type = typename Container::size_type;
