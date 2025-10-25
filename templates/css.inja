@@ -1,6 +1,6 @@
 ## for texture in textures
 {% set sheet=at(sheets, texture.sheetIndex) %}
-{{ sheet.id }} {
+.{{ sheet.id }} {
 	background-image: url('{{ texture.filename }}');
 	background-repeat: no-repeat;
 	{{ style }}
