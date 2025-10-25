@@ -327,67 +327,79 @@ By default a [JSON](https://www.json.org) file containing all the information ab
 
 ```json
 {
-  "sprites": [
-    {
-      "id": "sprite_0",
-      "index": 0,
-      "inputIndex": 0,
-      "inputSpriteIndex": 0,
-      "pivot": { "x": 8.0, "y": 8.0 },
-      "rect": { "x": 0, "y": 0, "w": 16, "h": 16 },
-      "trimmedRect": { "x": 0, "y": 0, "w": 16, "h": 16 },
-      "rotated": false,
-      "sourceIndex": 0,
-      "sourceRect": { "x": 0, "y": 0, "w": 16, "h": 16 },
-      "trimmedSourceRect": { "x": 0, "y": 0, "w": 16, "h": 16 },
-      "sliceIndex": 0,
-      "sliceSpriteIndex": 0,
-      "data": { "key": "value" },
-      "tags": { "key": "value" },
-      "vertices": [ 0.0, 0.0,  16.0, 0.0,  16.0, 16.0,  0.0, 16.0 ]
-    }
-  ],
-  "slices": [
-    {
-      "spriteIndices": [0]
-    }
-  ],
-  "sources": [
-    {
-      "filename": "dir/source.png",
-      "path": "root",
-      "width": 256,
-      "height": 256,
-    }
-  ],
-  "inputs": [
-    {
-      "filename": "dir/source.png",
-      "sources": [
-        {
-          "index": 0,
-          "spriteIndices": [0]
-        }
-      ]
-    }
-  ],
-  "tags": {
-    "key": {
-      "value": [0]
-    }
-  },
-  "textures": [
-    {
-      "sliceIndex": 0,
-      "spriteIndices": [0],
-      "path": "root",
-      "filename": "dir/spright-0.png",
-      "width": 256,
-      "height": 256,
-      "scale": 1.0,
-      "map": ""
-    }
-  ]
+	"sprites": [
+		{
+			"index": 0,
+			"id": "sprite_0",
+			"inputIndex": 0,
+			"inputSpriteIndex": 0,
+			"sourceIndex": 0,
+			"sourceRect": { "x": 0, "y": 0, "w": 16, "h": 16 },
+			"sliceIndex": 0,
+			"sliceSpriteIndex": 0,
+			"rect": { "x": 0, "y": 0, "w": 16, "h": 16 },
+			"trimmedRect": { "x": 0, "y": 0, "w": 16, "h": 16 },
+			"trimmedSourceRect": { "x": 0, "y": 0, "w": 16, "h": 16 },
+			"pivot": { "x": 8.0, "y": 8.0 },
+			"rotated": false,
+			"vertices": [ 0.0, 0.0,  16.0, 0.0,  16.0, 16.0,  0.0,16.0 ],
+			"tags": {
+				"key": "value"
+			},
+			"data": {
+				"key": "value"
+			}
+		}
+	],
+	"tags": {
+		"key": {
+			"value": [
+				0
+			]
+		}
+	},
+	"sheets": [
+		{
+			"id": "spright",
+			"slices": [
+				{
+					"spriteIndices": [0]
+				}
+			]
+		}
+	],
+	"sources": [
+		{
+			"path": "",
+			"filename": "dir/source.png",
+			"width": 256,
+			"height": 256
+		}
+	],
+	"inputs": [
+		{
+			"filename": "dir/source.png",
+			"sourceSprites": [
+				{
+					"sourceIndex": 0,
+					"spriteIndices": [0]
+				}
+			]
+		}
+	],
+	"textures": [
+		{
+			"sheetIndex": 0,
+			"sliceIndex": 0,
+			"path": "root",
+			"filename": "dir/spright-0.png",
+			"width": 16,
+			"height": 16,
+			"scale": 1.0,
+			"map": "",
+			"spriteIndices": [0]
+		}
+	]
 }
 ```
 

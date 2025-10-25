@@ -58,21 +58,36 @@ namespace {
     using SpriteIndex = int;
     using SliceIndex = int;
     using SourceIndex = int;
-    auto tags = std::map<TagKey, std::map<TagValue, std::vector<SpriteIndex>>>();
-    auto source_indices = std::map<ImageFilePtr, SourceIndex>();
-    auto sheet_slices = std::map<SheetIndex, std::vector<const Slice*>>();
-    auto slice_sprites = std::map<SliceIndex, std::vector<SpriteIndex>>();
-    auto sprite_on_slice = std::map<SpriteIndex, SliceIndex>();
+
     auto sprites_by_index = std::map<SpriteIndex, const Sprite*>();
-    auto input_source_sprites = std::map<std::pair<InputIndex, SourceIndex>, std::vector<SpriteIndex>>();
     for (const auto& sprite : sprites)
       sprites_by_index[sprite.index] = &sprite;
+
+    auto sprite_on_slice = std::map<SpriteIndex, SliceIndex>();
     for (const auto& slice : slices)
       for (const auto& sprite : slice.sprites)
         sprite_on_slice[sprite.index] = slice.index;
 
+    auto sheet_slices = std::map<SheetIndex, std::vector<const Slice*>>();
+    for (const auto& slice : slices)
+      sheet_slices[slice.sheet->index].push_back(&slice);
+
     auto json = inja::json{ };
+
+    for (const auto& [key, value] : variables)
+      std::visit([&, k = &key](const auto& v) { json[*k] = v; }, value);
+
     auto& json_sprites = json["sprites"];
+    auto& json_tags = json["tags"];
+    auto& json_sheets = json["sheets"];
+    auto& json_sources = json["sources"];
+    auto& json_inputs = json["inputs"];
+    auto& json_textures = json["textures"];
+
+    auto tags = std::map<TagKey, std::map<TagValue, std::vector<SpriteIndex>>>();
+    auto source_indices = std::map<ImageFilePtr, SourceIndex>();
+    auto slice_sprites = std::map<SliceIndex, std::vector<SpriteIndex>>();
+    auto input_source_sprites = std::map<std::pair<InputIndex, SourceIndex>, std::vector<SpriteIndex>>();
     json_sprites = inja::json::array();
     for (const auto& [sprite_index, sprite] : sprites_by_index) {
       auto& json_sprite = json_sprites.emplace_back();
@@ -115,7 +130,10 @@ namespace {
       json_sprite["data"] = json_variant_map(sprite->data);
     }
 
-    auto& json_tags = json["tags"];
+    auto sources_by_index = std::map<SourceIndex, ImageFilePtr>();
+    for (const auto& [source, index] : source_indices)
+      sources_by_index[index] = source;
+
     json_tags = inja::json::object();
     for (const auto& [key, value_sprite_indices] : tags) {
       auto& json_tag = json_tags[key];
@@ -123,10 +141,6 @@ namespace {
         json_tag[value] = sprite_indices;
     }
 
-    for (const auto& slice : slices)
-      sheet_slices[slice.sheet->index].push_back(&slice);
-
-    auto& json_sheets = json["sheets"];
     json_sheets = inja::json::array();
     for (const auto& [sheet_index, slices] : sheet_slices) {
       const auto& sheet = slices.front()->sheet;
@@ -140,11 +154,7 @@ namespace {
       }
     }
 
-    auto& json_sources = json["sources"];
     json_sources = inja::json::array();
-    auto sources_by_index = std::map<SourceIndex, ImageFilePtr>();
-    for (const auto& [source, index] : source_indices)
-      sources_by_index[index] = source;
     for (const auto& [index, source] : sources_by_index) {
       auto& json_source = json_sources.emplace_back();
       json_source["path"] = path_to_utf8(source->path());
@@ -153,7 +163,6 @@ namespace {
       json_source["height"] = source->height();
     }
 
-    auto& json_inputs = json["inputs"];
     json_inputs = inja::json::array();
     for (const auto& input : inputs) {
       auto& json_input = json_inputs.emplace_back();
@@ -168,7 +177,6 @@ namespace {
       }
     }
 
-    auto& json_textures = json["textures"];
     json_textures = inja::json::array();
     for (const auto& texture : textures) {
       if (texture.filename.empty())
@@ -193,10 +201,6 @@ namespace {
         texture.output->map_suffixes.at(to_unsigned(texture.map_index)));
       json_texture["spriteIndices"] = slice_sprites[slice.index];
     }
-
-    for (const auto& [key, value] : variables)
-      std::visit([&, k = &key](const auto& v) { json[*k] = v; }, value);
-
     return json;
   }
 
