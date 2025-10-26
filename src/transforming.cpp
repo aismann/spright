@@ -44,8 +44,8 @@ void transform_sprites(std::vector<Sprite>& sprites) {
       sprite.untransformed_source = sprite.source;
       sprite.untransformed_source_rect = sprite.source_rect;
 
-      auto image = convert_to_linear(*sprite.source, sprite.source_rect);
-      transform_image(image, sprite.transforms, *sprite.source);
+      auto image = convert_to_linear(sprite.source->image(), sprite.source_rect);
+      transform_image(image, sprite.transforms, sprite.source->image());
 
       sprite.source = std::make_shared<ImageFile>(
         convert_to_srgb(image), sprite.source->path(), 

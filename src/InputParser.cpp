@@ -125,16 +125,8 @@ std::shared_ptr<Output> InputParser::get_output(
 ImageFilePtr InputParser::get_source(const std::filesystem::path& path,
     const std::filesystem::path& filename, RGBA colorkey) {
   auto& source = m_sources[std::filesystem::weakly_canonical(path / filename)];
-  if (!source) {
-    auto image = load_image(path / filename);
-
-    if (colorkey != RGBA{ }) {
-      if (!colorkey.a)
-        colorkey = guess_colorkey(image);
-      replace_color(image, colorkey, RGBA{ });
-    }
-    source = std::make_shared<ImageFile>(std::move(image), path, filename);
-  }
+  if (!source)
+    source = std::make_shared<ImageFile>(path, filename, colorkey);
   return source;
 }
 
@@ -386,8 +378,8 @@ void InputParser::deduce_grid_sprites(State& state) {
 
       if (empty(rect) ||
           (state.trim_gray_levels ?
-           is_fully_black(*source, state.trim_threshold, rect) :
-           is_fully_transparent(*source, state.trim_threshold, rect))) {
+           is_fully_black(source->image(), state.trim_threshold, rect) :
+           is_fully_transparent(source->image(), state.trim_threshold, rect))) {
         ++skipped;
         continue;
       }
@@ -425,7 +417,7 @@ void InputParser::deduce_grid_sprites(State& state) {
 void InputParser::deduce_atlas_sprites(State& state) {
   const auto source = get_source(state);
   const auto is_update = (sprites_or_skips_in_current_input() != 0);
-  for (const auto& rect : find_islands(*source,
+  for (const auto& rect : find_islands(source->image(),
       state.atlas_merge_distance, state.trim_gray_levels)) {
     if (is_update && overlaps_sprite_or_skipped_rect(rect))
       continue;

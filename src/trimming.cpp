@@ -138,7 +138,7 @@ namespace {
   void trim_sprite(Sprite& sprite) {
     
     if (sprite.trim != Trim::none) {
-      sprite.trimmed_source_rect = get_used_bounds(*sprite.source,
+      sprite.trimmed_source_rect = get_used_bounds(sprite.source->image(),
         sprite.trim_gray_levels, sprite.trim_threshold, sprite.source_rect);
   
       if (sprite.trim_margin)
@@ -151,8 +151,8 @@ namespace {
 
     if (sprite.trim == Trim::convex) {
       const auto levels = (sprite.trim_gray_levels ?
-        get_gray_levels(*sprite.source, sprite.trimmed_source_rect) :
-        get_alpha_levels(*sprite.source, sprite.trimmed_source_rect));
+        get_gray_levels(sprite.source->image(), sprite.trimmed_source_rect) :
+        get_alpha_levels(sprite.source->image(), sprite.trimmed_source_rect));
 
       auto outline = get_polygon_outline(
         levels.view<RGBA::Channel>(), sprite.trim_threshold);

@@ -177,6 +177,7 @@ void check_rect(const ImageOrView& image, const Rect& rect) {
 
 // io
 Image load_image(const std::filesystem::path& filename);
+void load_image_header(const std::filesystem::path& filename, int* width, int* height);
 void save_image(const Image& image, const std::filesystem::path& filename);
 void save_animation(const Animation& animation, const std::filesystem::path& filename);
 

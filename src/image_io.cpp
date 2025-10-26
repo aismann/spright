@@ -293,6 +293,30 @@ Image load_image(const std::filesystem::path& filename) {
   return Image(ImageType::RGBA, width, height, data);
 }
 
+void load_image_header(const std::filesystem::path& filename, int* width, int* height) {
+#if defined(EMBED_TEST_FILES)
+  if (filename == "test/Items.png") {
+    unsigned char file[] {
+#include "test/Items.png.inc"
+    };
+    stbi_info_from_memory(file, sizeof(file), width, height, nullptr);
+  }
+  else
+#endif
+
+#if defined(_WIN32)
+  if (auto file = _wfopen(filename.wstring().c_str(), L"rb")) {
+#else
+  if (auto file = std::fopen(path_to_utf8(filename).c_str(), "rb")) {
+#endif
+    stbi_info_from_file(file, width, height, nullptr);
+    std::fclose(file);
+  }
+  if (!*width)
+    throw std::runtime_error("loading file '" +
+      path_to_utf8(filename) + "' failed");
+}
+
 void save_image(const Image& image, const std::filesystem::path& path) {
   if (!path.parent_path().empty())
     std::filesystem::create_directories(path.parent_path());

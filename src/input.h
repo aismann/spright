@@ -37,24 +37,61 @@ struct Extrude {
   WrapMode mode;
 };
 
-class ImageFile : public Image {
+class ImageFile {
 public:
   ImageFile(Image image, std::filesystem::path path, std::filesystem::path filename) 
-    : Image(std::move(image)),
+    : m_image(std::move(image)),
       m_path(std::move(path)),
-      m_filename(std::move(filename)) {
+      m_filename(std::move(filename)),
+      m_width(m_image.width()), 
+      m_height(m_image.height()) {
   }
 
-  ImageFile(std::filesystem::path path, std::filesystem::path filename) 
-    : ImageFile(load_image(path / filename), path, filename) {
+  ImageFile(std::filesystem::path path, std::filesystem::path filename, RGBA colorkey = { }) 
+    : m_path(std::move(path)), 
+      m_filename(std::move(filename)),
+      m_colorkey(colorkey) {
+    load_image_header(m_path / m_filename, &m_width, &m_height);
   }
 
   const std::filesystem::path& path() const { return m_path; }
   const std::filesystem::path& filename() const { return m_filename; }
+  int width() const { return m_width; }
+  int height() const { return m_height; }
+  Rect bounds() const { return { 0, 0, width(), height() }; }
+
+  Image& image() {    
+    lazy_load_image();
+    return m_image;
+  }
+
+  const Image& image() const {
+    lazy_load_image();
+    return m_image;
+  }
 
 private:
+  void lazy_load_image() const {
+    const auto lock = std::lock_guard(m_mutex);
+    if (m_image)
+      return;
+
+    m_image = load_image(m_path / m_filename);
+    auto colorkey = m_colorkey;
+    if (colorkey != RGBA{ }) {
+      if (!colorkey.a)
+        colorkey = guess_colorkey(m_image);
+      replace_color(m_image, colorkey, RGBA{ });
+    }
+  }
+
+  mutable std::mutex m_mutex;
+  mutable Image m_image;
   std::filesystem::path m_path;
   std::filesystem::path m_filename;
+  RGBA m_colorkey{ };
+  int m_width{ };
+  int m_height{ };
 };
 
 struct TransformScale {

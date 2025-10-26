@@ -9,10 +9,10 @@ namespace spright {
 namespace {
   const Image* get_source(const Sprite& sprite, int map_index) {
     if (map_index < 0)
-      return sprite.source.get();
+      return &sprite.source->image();
     const auto index = to_unsigned(map_index);
     if (sprite.maps && index < sprite.maps->size())
-      return sprite.maps->at(index).get();
+      return &sprite.maps->at(index)->image();
     return nullptr;
   }
 

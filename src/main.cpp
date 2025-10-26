@@ -28,6 +28,7 @@ int main(int argc, const char* argv[]) try {
   auto textures = std::vector<Texture>();
   if (settings.mode != Mode::autocomplete &&
       settings.mode != Mode::describe_input) {
+
     transform_sprites(sprites);
     time_points.emplace_back(Clock::now(), "transforming");
 
@@ -64,6 +65,9 @@ int main(int argc, const char* argv[]) try {
   }
 
   if (settings.verbose) {
+    time_points.emplace_back(Clock::now() + 
+      (time_points.back().first - time_points.front().first), "total");
+
     for (auto i = 1u; i < time_points.size(); ++i)
       std::cout << (i > 1 ? ", " : "") << time_points[i].second << ": " << 
         std::chrono::duration_cast<std::chrono::milliseconds>(
