@@ -506,13 +506,12 @@ void InputParser::deduce_globbed_inputs(State& state) {
     return sequences;
   }();
 
-  const auto inputs_in_sheet_before = m_inputs.size();
   for (const auto& sequence : sequences) {
     if (has_map_suffix(sequence, state.map_suffixes))
       continue;
 
     // only add inputs not encountered before
-    if (last_n_contain(m_inputs, static_cast<int>(m_inputs.size() - inputs_in_sheet_before),
+    if (last_n_contain(m_inputs, m_inputs_in_current_sheet,
         [&](const Input& input) {
           return input.source_filenames == sequence.sequence_filename();
         }))
@@ -526,6 +525,10 @@ void InputParser::deduce_globbed_inputs(State& state) {
     input_state.source_filenames = sequence;
     input_ends(input_state);
   }
+}
+
+void InputParser::sheet_begins([[maybe_unused]] State& state) {
+  m_inputs_in_current_sheet = { };
 }
 
 void InputParser::glob_begins([[maybe_unused]] State& state) {
@@ -559,6 +562,7 @@ void InputParser::input_ends(State& state) {
   m_skipped_in_current_input.clear();
   m_current_grid_cell = { };
   m_current_sequence_index = { };
+  ++m_inputs_in_current_sheet;
   ++m_inputs_in_current_glob;
 }
 
@@ -756,7 +760,10 @@ void InputParser::parse(std::istream& input,
           m_current_transform.get());
       update_not_applied_definitions(definition, line_number);
 
-      if (definition == Definition::glob) {
+      if (definition == Definition::sheet) {
+        sheet_begins(state);
+      }
+      else if (definition == Definition::glob) {
         glob_begins(state);
       }
       else if (definition == Definition::transform) {

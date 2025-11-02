@@ -48,6 +48,7 @@ private:
   void scope_ends(State& state);
   void sheet_ends(State& state);
   void output_ends(State& state);
+  void sheet_begins(State& state);
   void glob_begins(State& state);
   void glob_ends(State& state);
   void input_ends(State& state);
@@ -72,6 +73,7 @@ private:
   std::map<std::string, TransformPtr> m_transforms;
   std::vector<Sprite> m_sprites;
   VariantMap m_variables;
+  int m_inputs_in_current_sheet{ };
   int m_inputs_in_current_glob{ };
   int m_sprites_in_current_input{ };
   int m_duplicated_in_current_input{ };
