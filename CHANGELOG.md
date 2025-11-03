@@ -3,7 +3,31 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Version 3.6.0] - 2025-05-03
+## [Version 3.7.0] - 2025-11-03
+
+### Added
+
+- Allow to split lines with semicolons.
+- Transformations can also be applied to outputs.
+- Outputting sheets in description.
+- Loading image data only on demand.
+- Added CSS template.
+
+### Changed
+
+- Generating ordered JSON description.
+- Renamed input property `sources` to `sourceSprites` in description.
+- Renamed scale filters `triangle`/`pointsample` to `bilinear`/`nearest`.
+
+### Fixed
+
+- Fixed index of duplicated sprite (#24).
+- Fixed tags of duplicated sprite (#24).
+- Not keeping transforms when duplicating sprite.
+- Fixed globbing to only add not yet added inputs.
+- Improved GIF output.
+
+## [Version 3.6.1] - 2025-05-03
 
 ### Added
 
@@ -332,7 +356,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed -- commandline arguments.
 - Fixed sample cpp.template.
 
-[version 3.6.0]: https://github.com/houmain/spright/compare/3.5.4...3.6.0
+[version 3.7.0]: https://github.com/houmain/spright/compare/3.6.1...3.7.0
+[version 3.6.1]: https://github.com/houmain/spright/compare/3.5.4...3.6.1
 [version 3.5.4]: https://github.com/houmain/spright/compare/3.5.3...3.5.4
 [version 3.5.3]: https://github.com/houmain/spright/compare/3.5.2...3.5.3
 [version 3.5.2]: https://github.com/houmain/spright/compare/3.5.1...3.5.2
