@@ -107,6 +107,8 @@ namespace {
       int distance, bool gray_levels) {
 
     const auto adjacent = [&](const Rect& a, const Rect& b) {
+      if (containing(a, b) || containing(b, a))
+        return true;
       const auto intersection = intersect(a, expand(b, distance));
       if (empty(intersection))
         return false;
