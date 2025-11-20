@@ -120,7 +120,7 @@ struct State {
   Rect rect{ };
   Trim trim{ Trim::rect };
   int trim_threshold{ 1 };
-  int trim_margin{ };
+  Margin trim_margin{ };
   bool trim_gray_levels{ };
   bool crop{ };
   bool crop_pivot{ };

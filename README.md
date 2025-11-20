@@ -279,7 +279,7 @@ The following table contains a list of all definitions, with the item each affec
 | trim | sprite | trim-mode | Sets a mode for trimming, which reduces the sprite to the non-transparent region:<br/>- _none_ : Do not trim.<br/>- _rect_ : Trim to rectangular region (default).<br/>- _convex_ : Trim to convex region (_vertices_ are set in output description). |
 | trim-channel | sprite | channel | Sets the channel which should be considered during trimming:<br/>- _alpha_ : The alpha channel of a pixel (default).<br/>- _gray_ : The gray level of the pixel. |
 | trim-threshold | sprite | value | Sets the value which should be considered non-transparent during trimming (1 - 255). |
-| trim-margin | sprite | [pixels] | Sets a number of transparent pixel rows around the sprite, which should not be removed by trimming. |
+| trim-margin | sprite | [x], [y],<br/>[r-x], [b-y] | Sets a number of transparent pixel rows around the sprite, which should not be removed by trimming. |
 | crop | sprite | [boolean] | Sets whether the sprite's rectangle should be reduced to the trimmed bounds. |
 | crop-pivot | sprite | [boolean] | Sets whether the sprite's pivot point should be relative to the trimmed bounds. |
 | extrude | sprite | [pixels],<br/>[wrap-mode] | Adds a padding around the sprite and fills it depending on the _wrap-mode_ :<br/>- _clamp_ : Clamp to border pixels (default).<br/>- _mirror_ : Mirror border pixels.<br/>- _repeat_ : Repeat border pixels. |

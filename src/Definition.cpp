@@ -204,7 +204,7 @@ void apply_definition(Definition definition,
 
   auto argument_index = 0u;
   const auto arguments_left = [&]() {
-    return argument_index < arguments.size();
+    return (argument_index < arguments.size() ? arguments.size() - argument_index : 0u);
   };
   const auto next_argument_is_real = [&]() {
     return (arguments_left() &&
@@ -602,7 +602,22 @@ void apply_definition(Definition definition,
     }
 
     case Definition::trim_margin:
-      state.trim_margin = (arguments_left() ? check_uint() : 1);
+      if (arguments_left() <= 1) {
+        const auto w = (arguments_left() ? check_uint() : 1);
+        state.trim_margin = { w, w, w, w };
+      }
+      else if (arguments_left() == 2) {
+        const auto h = check_uint();
+        const auto v = check_uint();
+        state.trim_margin = { h, v, h, v };
+      }
+      else if (arguments_left() == 4) {
+        const auto x0 = check_uint();
+        const auto y0 = check_uint();
+        const auto x1 = check_uint();
+        const auto y1 = check_uint();
+        state.trim_margin = { x0, y0, x1, y1 };
+      }
       break;
 
     case Definition::trim_threshold:

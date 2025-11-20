@@ -141,7 +141,7 @@ namespace {
       sprite.trimmed_source_rect = get_used_bounds(sprite.source->image(),
         sprite.trim_gray_levels, sprite.trim_threshold, sprite.source_rect);
   
-      if (sprite.trim_margin)
+      if (!empty(sprite.trim_margin))
         sprite.trimmed_source_rect = intersect(expand(
           sprite.trimmed_source_rect, sprite.trim_margin), sprite.source_rect);
     }
@@ -158,7 +158,8 @@ namespace {
         levels.view<RGBA::Channel>(), sprite.trim_threshold);
       outline = to_convex_polygon(*outline, 0);
       outline = simplify_polygon(*outline, 3);
-      expand_polygon(*outline, sprite.trim_margin);
+      // TODO: fix expanding by non-uniform margin
+      expand_polygon(*outline, sprite.trim_margin.x0);
       sprite.vertices = to_point_list(*outline);
     }
     else {

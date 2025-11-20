@@ -92,16 +92,32 @@ struct RectT {
   friend bool operator!=(const RectT& a, const RectT& b) { return !(a == b); }
 };
 
+template<typename T>
+struct MarginT {
+  T x0{ };
+  T y0{ };
+  T x1{ };
+  T y1{ };
+
+  MarginT() = default;
+  constexpr MarginT(T x0, T y0, T x1, T y1)
+    : x0(x0), y0(y0), x1(x1), y1(y1) {
+  }
+};
+
 using Size = SizeT<int>;
 using SizeF = SizeT<real>;
 using Point = PointT<int>;
 using PointF = PointT<real>;
 using Rect = RectT<int>;
 using RectF = RectT<real>;
+using Margin = MarginT<int>;
+using MarginF = MarginT<real>;
 
 constexpr bool empty(const Size& size) { return (size.x == 0 || size.y == 0); }
 constexpr bool empty(const SizeF& size) { return (size.x == 0 || size.y == 0); }
 constexpr bool empty(const Rect& rect) { return (rect.w == 0 || rect.h == 0); }
+constexpr bool empty(const Margin& margin) { return (margin.x0 == 0 && margin.y0 == 0 && margin.x1 && margin.y1); }
 
 constexpr PointF rotate_cw(const PointF& point, real width) {
   return { width - point.y, point.x };
@@ -109,6 +125,15 @@ constexpr PointF rotate_cw(const PointF& point, real width) {
 
 constexpr Rect expand(const Rect& rect, int value) {
   return { rect.x - value, rect.y - value, rect.w + value * 2, rect.h + value * 2 };
+}
+
+constexpr Rect expand(const Rect& rect, const Margin& margin) {
+  return { 
+    rect.x - margin.x0,
+    rect.y - margin.y0, 
+    rect.w + (margin.x0 + margin.x1),
+    rect.h + (margin.y0 + margin.y1) 
+  };
 }
 
 constexpr Rect intersect(const Rect& a, const Rect& b) {

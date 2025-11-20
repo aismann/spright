@@ -162,7 +162,7 @@ struct Sprite {
   Rect trimmed_source_rect{ };
   AnchorF pivot{ };
   Trim trim{ Trim::none };
-  int trim_margin{ };
+  Margin trim_margin{ };
   int trim_threshold{ };
   bool trim_gray_levels{ };
   bool crop{ };
