@@ -222,7 +222,7 @@ void InputParser::sprite_ends(State& state) {
   sprite.data = state.data;
   advance();
 
-  if (state.max_sprites > 0 && 
+  if (state.max_sprites >= 0 && 
       m_sprites_in_current_input >= state.max_sprites)
     error("max-sprites exceeded (", state.max_sprites, ")");
 
