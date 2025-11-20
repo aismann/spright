@@ -31,7 +31,9 @@ enum class Definition {
   input,
   colorkey,
   grid,
+  grid_vertical,
   grid_cells,
+  grid_cells_vertical,
   grid_offset,
   grid_spacing,
   row,
@@ -111,6 +113,7 @@ struct State {
   Size grid_offset_bottom_right{ };
   Size grid_spacing{ };
   Size span{ 1, 1 };
+  bool grid_vertical{ };
   int max_sprites{ 1000 };
   int atlas_merge_distance{ -1 };
   AnchorF pivot{ { 0, 0 }, AnchorX::center, AnchorY::middle };

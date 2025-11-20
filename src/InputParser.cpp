@@ -183,7 +183,12 @@ void InputParser::sprite_ends(State& state) {
   const auto advance = [&]() {
     check(m_current_sequence_index < state.source_filenames.count(), 
       "too many sprites in sequence");
-    m_current_grid_cell.x += state.span.x;
+
+    if (!state.grid_vertical)
+      m_current_grid_cell.x += state.span.x;
+    else
+      m_current_grid_cell.y += state.span.y;
+
     if (state.source_filenames.is_sequence())
       ++m_current_sequence_index;
   };
@@ -352,28 +357,42 @@ void InputParser::deduce_grid_sprites(State& state) {
   deduce_grid_size(state);
   const auto source = get_source(state);
 
-  auto stride = state.grid;
-  stride.x += state.grid_spacing.x;
-  stride.y += state.grid_spacing.y;
+  const auto [grid_cells_x, grid_cells_y] = [&]() {
+    auto stride = state.grid;
+    stride.x += state.grid_spacing.x;
+    stride.y += state.grid_spacing.y;
 
-  auto cells_x = state.grid_cells.x;
-  auto cells_y = state.grid_cells.y;
-  if (!cells_x || !cells_y) {
-    const auto bounds = get_grid_bounds(state);
-    if (!cells_x)  
-      cells_x = ceil(bounds.w, stride.x) / stride.x;
-    if (!cells_y)
-      cells_y = ceil(bounds.h, stride.y) / stride.y;
-  }
+    auto cells_x = state.grid_cells.x;
+    auto cells_y = state.grid_cells.y;
+    if (!cells_x || !cells_y) {
+      const auto bounds = get_grid_bounds(state);
+      if (!cells_x)
+        cells_x = ceil(bounds.w, stride.x) / stride.x;
+      if (!cells_y)
+        cells_y = ceil(bounds.h, stride.y) / stride.y;
+    }
+    return std::make_pair(cells_x, cells_y);
+  }();
 
-  auto& x = m_current_grid_cell.x;
-  auto& y = m_current_grid_cell.y;
+  // swap x and y for vertical grids
+  auto [x, y, cells_x, cells_y, span_x, span_y] = [&]() {
+    if (!state.grid_vertical)
+      return std::tie(
+        m_current_grid_cell.x, m_current_grid_cell.y,
+        grid_cells_x, grid_cells_y,
+        state.span.x, state.span.y);
+
+    return std::tie(
+      m_current_grid_cell.y, m_current_grid_cell.x, 
+      grid_cells_y, grid_cells_x,
+      state.span.y, state.span.x);
+  }();
 
   const auto is_update = (sprites_or_skips_in_current_input() != 0);
-  for (; y < cells_y; y += state.span.y) {
+  for (; y < cells_y; y += span_y) {
     auto output_offset = (x != 0);
     auto skipped = 0;
-    for (; x < cells_x; x += state.span.x) {      
+    for (; x < cells_x; x += span_x) {      
       const auto rect = intersect(deduce_rect_from_grid(state), source->bounds());
 
       if (empty(rect) ||
@@ -408,7 +427,7 @@ void InputParser::deduce_grid_sprites(State& state) {
       sprite_ends(state);
       
       // do not advance twice (could be improved)
-      x -= state.span.x;
+      x -= span_x;
     }
     x = 0;
   }

@@ -75,7 +75,9 @@ std::string_view get_definition_name(Definition definition) {
     case Definition::input: return "input";
     case Definition::colorkey: return "colorkey";
     case Definition::grid: return "grid";
+    case Definition::grid_vertical: return "grid-vertical";
     case Definition::grid_cells: return "grid-cells";
+    case Definition::grid_cells_vertical: return "grid-cells-vertical";
     case Definition::grid_offset: return "grid-offset";
     case Definition::grid_spacing: return "grid-spacing";
     case Definition::row: return "row";
@@ -155,7 +157,9 @@ Definition get_affected_definition(Definition definition) {
     case Definition::path:
     case Definition::colorkey:
     case Definition::grid:
+    case Definition::grid_vertical:
     case Definition::grid_cells:
+    case Definition::grid_cells_vertical:
     case Definition::grid_offset:
     case Definition::grid_spacing:
     case Definition::atlas:
@@ -486,17 +490,21 @@ void apply_definition(Definition definition,
       break;
     }
     case Definition::grid:
+    case Definition::grid_vertical:
       // allow cell size of one dimension to be zero
       state.grid = check_size(true);
       check((state.grid.x >= 0 && state.grid.y >= 0) &&
             (state.grid.x > 0 || state.grid.y > 0), "invalid grid");
+      state.grid_vertical = (definition == Definition::grid_vertical);
       break;
 
     case Definition::grid_cells:
+    case Definition::grid_cells_vertical:
       // allow cell count in one dimension to be zero
       state.grid_cells = check_size(false);
       check((state.grid_cells.x >= 0 && state.grid_cells.y >= 0) &&
             (state.grid_cells.x > 0 || state.grid_cells.y > 0), "invalid grid");
+      state.grid_vertical = (definition == Definition::grid_cells_vertical);
       break;
 
     case Definition::grid_offset:
@@ -517,6 +525,8 @@ void apply_definition(Definition definition,
       check(has_grid(state), "offset is only valid in grid");
       current_grid_cell.x = 0;
       current_grid_cell.y = check_uint();
+      if (state.grid_vertical)
+        std::swap(current_grid_cell.x, current_grid_cell.y);
       break;
 
     case Definition::skip:
