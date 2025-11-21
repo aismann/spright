@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 3.8.0] - 2025-11-21
+
+### Added
+
+- Added `grid-vertical` and `grid-cells-vertical`.
+- Allow to set different `trim-margin` for each side (#25).
+- Added `resize` transformation (#26).
+
+### Fixed
+
+- Allow to set `max-sprites` to 0.
+- Fixed `atlas` detecting sprites fully enclosed in other sprites.
+
 ## [Version 3.7.0] - 2025-11-03
 
 ### Added
@@ -356,6 +369,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed -- commandline arguments.
 - Fixed sample cpp.template.
 
+[version 3.8.0]: https://github.com/houmain/spright/compare/3.7.0...3.8.0
 [version 3.7.0]: https://github.com/houmain/spright/compare/3.6.1...3.7.0
 [version 3.6.1]: https://github.com/houmain/spright/compare/3.5.4...3.6.1
 [version 3.5.4]: https://github.com/houmain/spright/compare/3.5.3...3.5.4
