@@ -107,6 +107,7 @@ std::string_view get_definition_name(Definition definition) {
     case Definition::align_pivot: return "align-pivot";
     case Definition::transform: return "transform";
     case Definition::scale: return "scale";
+    case Definition::resize: return "resize";
     case Definition::rotate: return "rotate";
     case Definition::description: return "description";
     case Definition::template_: return "template";
@@ -187,6 +188,7 @@ Definition get_affected_definition(Definition definition) {
       return Definition::sprite;
 
     case Definition::scale:
+    case Definition::resize:
     case Definition::rotate:
       return Definition::transform;
 
@@ -331,7 +333,7 @@ void apply_definition(Definition definition,
         { "default", "box", "bilinear", "cubicspline",
             "catmullrom", "mitchell", "nearest" }); index >= 0)
       return static_cast<ScaleFilter>(index);
-    error("invalid resize filter '", string, "'");
+    error("invalid scale filter '", string, "'");
     return { };
   };
   const auto check_rotate_method = [&]() -> RotateMethod {
@@ -688,6 +690,16 @@ void apply_definition(Definition definition,
       const auto scale_filter = (arguments_left() ?
         check_scale_filter() : ScaleFilter::undefined);
       add_transform_step(TransformScale{ { scale_x, scale_y }, scale_filter });
+      break;
+    }
+
+    case Definition::resize: {
+      const auto width = check_real();
+      const auto height = (next_argument_is_real() ? check_real() : width);
+      check(width >= 0 && height >= 0, "invalid size");
+      const auto scale_filter = (arguments_left() ?
+        check_scale_filter() : ScaleFilter::undefined);
+      add_transform_step(TransformResize{ { width, height }, scale_filter });
       break;
     }
     

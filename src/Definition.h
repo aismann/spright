@@ -65,6 +65,7 @@ enum class Definition {
 
   transform,
   scale,
+  resize,
   rotate,
 
   description,

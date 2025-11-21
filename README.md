@@ -292,6 +292,7 @@ The following table contains a list of all definitions, with the item each affec
 | data | sprite | key, value | Adds a user defined data entry to a sprite. |
 | **transform** | sprite,<br/>output | id | Defines a transformation or applies it to sprites and outputs. |
 | scale | transform | scale-x,<br/>[scale-y],<br/>[scale-filter] | Sets a factor the image should be scaled by, with an optional explicit scale-filter:<br/>- _nearest_ : Simple point sampling.<br/>- _bilinear_ : Bilinear filtering.<br/>- _box_ : A trapezoid with 1-pixel wide ramps.<br/>- _cubicspline_ : A cubic b-spline (gaussian-esque).<br/>- _catmullrom_ : An interpolating cubic spline.<br/>- _mitchell_ : Mitchell-Netrevalli filter with B=1/3, C=1/3. |
+| resize | transform | width,<br/>[height],<br/>[scale-filter] | Resizes the image to the specified size, with an optional explicit scale-filter (see _scale_).
 | rotate | transform | angle,<br/>[sample-mode] | Sets the degrees the image should be rotated clockwise, with an optional explicit sample-mode:<br/>- _nearest_ : Sample the nearest pixel.<br/>- _bilinear_ : Mix four adjacent pixels. |
 | **description** | - | filename | Adds an additional location where the output description should be written. When the _filename_ is a sequence e.g. `"slice{0-}.plist"` then each _slice_ is output to a separate file. |
 | template | description | filename | Sets the template which should be used for generating the output description. |

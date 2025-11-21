@@ -10,6 +10,17 @@ namespace {
       [&](const TransformScale& scale) {
         image = resize_image(image, scale.scale, scale.scale_filter);
       },
+      [&](const TransformResize& resize) {
+        auto scale = SizeF{
+          (resize.size.x ? resize.size.x / image.width() : 1.0),
+          (resize.size.y ? resize.size.y / image.height() : 1.0),
+        };
+        if (!resize.size.x)
+          scale.x = scale.y;
+        if (!resize.size.y)
+          scale.y = scale.x;
+        image = resize_image(image, scale, resize.scale_filter);
+      },
       [&](const TransformRotate& rotate) {
         const auto background = guess_colorkey(source);
         image = rotate_image(image, rotate.angle, background, rotate.rotate_method);
@@ -30,6 +41,9 @@ namespace {
       [&](const TransformScale& resize) {
         scale.x *= resize.scale.x;
         scale.y *= resize.scale.y;
+      },
+      [&](const TransformResize&) {
+        scale = { };
       },
       [&](const TransformRotate&) {
         scale = { };

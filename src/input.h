@@ -104,7 +104,12 @@ struct TransformRotate {
   RotateMethod rotate_method;
 };
 
-using TransformStep = std::variant<TransformScale, TransformRotate>;
+struct TransformResize {
+  SizeF size;
+  ScaleFilter scale_filter;
+};
+
+using TransformStep = std::variant<TransformScale, TransformRotate, TransformResize>;
 using Transform = std::vector<TransformStep>;
 using TransformPtr = std::shared_ptr<const Transform>;
 
