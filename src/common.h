@@ -134,6 +134,7 @@ void replace_variables(std::string& expression,
   const std::function<std::string(std::string_view)>& replace_function);
 void replace_variables(std::string& expression, const VariantMap& variables);
 void replace_variables(std::filesystem::path& path, const VariantMap& variables);
+std::string replace_variable(std::string_view variable, const VariantMap& variables);
 std::string variant_to_string(const Variant& variant);
 std::string make_identifier(std::string string);
 
@@ -151,6 +152,17 @@ void for_each_part(std::string_view string, char separator, bool keep_empty, F&&
     ++pos;
     begin = pos;
   }
+}
+
+template<typename C, typename T>
+int index_of(const C& container, const T& value) {
+  auto i = 0;
+  for (const auto& e : container) {
+    if (e == value)
+      return i;
+    ++i;
+  }
+  return -1;
 }
 
 constexpr real deg_to_rad(real deg) { return deg * (pi / 180.0); }

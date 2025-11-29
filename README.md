@@ -274,7 +274,7 @@ The following table contains a list of all definitions, with the item each affec
 | id | sprite | id | Sets the sprite's id (defaults to `"sprite_{{index}}"`). See list of available [variables](#variables). |
 | duplicate | sprite | [id],<br/>[duplicate-id] | Adds a new sprite which is a duplicate of an existing sprite and optionally set its id. Unless the sprite to duplicate is specified with the second parameter, the last added sprite is duplicated. |
 | span | sprite | columns, rows | Sets the number of grid cells a sprite spans. |
-| rect | sprite | x, y, width, height | Sets a sprite's rectangle in the input sheet. |
+| rect | sprite | x, y, width, height | Sets a sprite's rectangle on the input. |
 | pivot | sprite | pivot-x, pivot-y | Sets the coordinates of the sprite's pivot point. Optionally the horizontal (_left, center, right_) and vertical (_top, middle, bottom_) origin of the coordinates can be set (e.g. `10, 20` / `right - 5, top + 3` / `bottom left`). |
 | trim | sprite | trim-mode | Sets a mode for trimming, which reduces the sprite to the non-transparent region:<br/>- _none_ : Do not trim.<br/>- _rect_ : Trim to rectangular region (default).<br/>- _convex_ : Trim to convex region (_vertices_ are set in output description). |
 | trim-channel | sprite | channel | Sets the channel which should be considered during trimming:<br/>- _alpha_ : The alpha channel of a pixel (default).<br/>- _gray_ : The gray level of the pixel. |
@@ -283,7 +283,7 @@ The following table contains a list of all definitions, with the item each affec
 | crop | sprite | [boolean] | Sets whether the sprite's rectangle should be reduced to the trimmed bounds. |
 | crop-pivot | sprite | [boolean] | Sets whether the sprite's pivot point should be relative to the trimmed bounds. |
 | extrude | sprite | [pixels],<br/>[wrap-mode] | Adds a padding around the sprite and fills it depending on the _wrap-mode_ :<br/>- _clamp_ : Clamp to border pixels (default).<br/>- _mirror_ : Mirror border pixels.<br/>- _repeat_ : Repeat border pixels. |
-| min-bounds | sprite | x, [y] | Sets a sprite's minimum bounds, which is the total space it allocates on the sheet. Smaller sprites are surrounded with transparency. |
+| min-bounds | sprite | x, [y] | Sets a sprite's minimum bounds, which is the space it allocates on the sheet. Smaller sprites are surrounded with transparency. |
 | divisible-bounds | sprite | x, [y] | Restricts the sprite's bounds to be divisible by a certain number of pixels. |
 | common-bounds | sprite | [key] | Makes all sprites with identical _keys_ expand to common bounds. |
 | align | sprite | align-x, align-y | Sets the alignment of the sprite within its bounds. The parametrization works as for _pivot_ points. |

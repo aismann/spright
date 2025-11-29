@@ -114,7 +114,7 @@ using Transform = std::vector<TransformStep>;
 using TransformPtr = std::shared_ptr<const Transform>;
 
 struct Input {
-  int index;
+  int index{ };
   std::string source_filenames;
   std::vector<ImageFilePtr> sources;
 };

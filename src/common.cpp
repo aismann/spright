@@ -463,6 +463,12 @@ void replace_variables(std::filesystem::path& path, const VariantMap& variables)
   path = utf8_to_path(string);
 }
 
+std::string replace_variable(std::string_view variable, const VariantMap& variables) {
+  if (auto it = variables.find(variable); it != variables.end())
+    return variant_to_string(it->second);
+  error("unknown id '", variable, "'");
+}
+
 std::string variant_to_string(const Variant& variant) {
   auto string = std::string();
   std::visit([&](const auto& value) {

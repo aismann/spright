@@ -10,6 +10,57 @@
 namespace spright {
 
 namespace {
+  void evaluate_sprite_expression(const Sprite& sprite, std::string& expression,
+      const VariantMap& variables) {
+    replace_variables(expression, [&](std::string_view variable) {
+      if (variable == "index")
+        return std::to_string(sprite.index);
+      if (variable == "inputIndex")
+        return std::to_string(sprite.input_index);
+      if (variable == "inputSpriteIndex")
+        return std::to_string(sprite.input_sprite_index);
+      if (variable == "sheet.id")
+        return sprite.sheet->id;
+
+      // "dir/file 01.png"
+      if (variable == "source.filename")
+        return path_to_utf8(sprite.source->filename());
+
+      // "dir/file 01"
+      if (variable == "source.filenameBase")
+        return remove_extension(path_to_utf8(sprite.source->filename()));
+
+      // "file 01"
+      if (variable == "source.filenameStem")
+        return remove_extension(
+          path_to_utf8(sprite.source->filename().filename()));
+
+      // "dir_file_01"
+      if (variable == "source.filenameId")
+        return make_identifier(remove_extension(
+          path_to_utf8(sprite.source->filename())));
+
+      // "dir"
+      if (variable == "source.dirname")
+        return path_to_utf8(sprite.source->filename().parent_path());
+
+      return replace_variable(variable, variables);
+    });
+  }
+
+  void evaluate_slice_expression(const Slice& slice, std::string& expression,
+      const VariantMap& variables) {
+    replace_variables(expression, [&](std::string_view variable) {
+      if (variable == "index")
+        return std::to_string(slice.index);
+      if (variable == "sheet.id")
+        return slice.sheet->id;
+      if (variable == "sprite.id")
+        return (slice.sprites.empty() ? "" : slice.sprites[0].id);
+      return replace_variable(variable, variables);
+    });
+  }
+
   inja::json json_point(const PointF& point) {
     auto json_point = inja::json::object();
     json_point["x"] = point.x;
@@ -55,6 +106,7 @@ namespace {
     using TagKey = std::string;
     using TagValue = std::string;
     using SheetIndex = int;
+    using TextureIndex = int;
     using InputIndex = int;
     using SpriteIndex = int;
     using SliceIndex = int;
@@ -73,6 +125,13 @@ namespace {
     for (const auto& slice : slices)
       sheet_slices[slice.sheet->index].push_back(&slice);
 
+    auto sheet_outputs = std::map<SheetIndex, std::vector<const Output*>>();
+    for (const auto& texture : textures) {
+      auto& outputs = sheet_outputs[texture.slice->sheet->index]; 
+      if (index_of(outputs, texture.output) < 0)
+        outputs.push_back(texture.output);
+    }
+
     auto json = inja::json{ };
 
     for (const auto& [key, value] : variables)
@@ -80,9 +139,9 @@ namespace {
 
     auto& json_sprites = json["sprites"];
     auto& json_tags = json["tags"];
-    auto& json_sheets = json["sheets"];
-    auto& json_sources = json["sources"];
     auto& json_inputs = json["inputs"];
+    auto& json_sources = json["sources"];
+    auto& json_sheets = json["sheets"];
     auto& json_textures = json["textures"];
 
     auto tags = std::map<TagKey, std::map<TagValue, std::vector<SpriteIndex>>>();
@@ -142,16 +201,56 @@ namespace {
         json_tag[value] = sprite_indices;
     }
 
+    auto sheet_output_texture_indices = 
+      std::map<std::pair<SheetIndex, const Output*>, std::vector<TextureIndex>>();
+    json_textures = inja::json::array();
+    for (const auto& texture : textures) {
+      if (texture.filename.empty())
+        continue;
+
+      const auto& slice = *texture.slice;
+      const auto& sheet = *slice.sheet;
+      const auto& output = *texture.output;
+      sheet_output_texture_indices[{ sheet.index, &output }].push_back(to_int(json_textures.size()));
+
+      auto& json_texture = json_textures.emplace_back();
+      json_texture["sheetIndex"] = sheet.index;
+      json_texture["outputIndex"] = index_of(sheet_outputs[sheet.index], texture.output);
+      json_texture["sliceIndex"] = texture.slice->sheet_index;
+      json_texture["path"] = path_to_utf8(settings.output_path);
+      json_texture["filename"] = path_to_utf8(
+        settings.output_path.empty() ? texture.filename :
+          std::filesystem::relative(texture.filename, settings.output_path));
+      json_texture["width"] = round_to_int(slice.width * (output.scale.x ? output.scale.x : 1.0));
+      json_texture["height"] = round_to_int(slice.height * (output.scale.y ? output.scale.y : 1.0));
+      json_texture["scale"] = (!empty(output.scale) ? std::max(output.scale.x, output.scale.y) : 1.0);
+      json_texture["map"] = (texture.map_index < 0 ?
+        texture.output->default_map_suffix :
+        texture.output->map_suffixes.at(to_unsigned(texture.map_index)));
+      json_texture["spriteIndices"] = slice_sprites[slice.index];
+    }
+
     json_sheets = inja::json::array();
     for (const auto& [sheet_index, slices] : sheet_slices) {
-      const auto& sheet = slices.front()->sheet;
+      const auto& first_slice = *slices.front();
+      const auto& sheet = *first_slice.sheet;
       auto& json_sheet = json_sheets.emplace_back();
-      json_sheet["id"] = sheet->id;
+      json_sheet["id"] = sheet.id;
       auto& json_slices = json_sheet["slices"];
       json_slices = inja::json::array();
       for (auto* slice : slices) {
         auto& json_slice = json_slices.emplace_back();
         json_slice["spriteIndices"] = slice_sprites[slice->index];
+      }
+
+      auto& json_outputs = json_sheet["outputs"];
+      json_outputs = inja::json::array();
+      for (const auto* output : sheet_outputs[sheet_index]) {
+        auto& json_output = json_outputs.emplace_back();
+        auto filename = output->filename.sequence_filename();
+        evaluate_slice_expression(first_slice, filename, variables);
+        json_output["filename"] = filename;
+        json_output["textureIndices"] = sheet_output_texture_indices[{ sheet.index, output }];
       }
     }
 
@@ -176,31 +275,6 @@ namespace {
         json_source["sourceIndex"] = source_index;
         json_source["spriteIndices"] = input_source_sprites[{ input.index, source_index }];
       }
-    }
-
-    json_textures = inja::json::array();
-    for (const auto& texture : textures) {
-      if (texture.filename.empty())
-        continue;
-
-      auto& json_texture = json_textures.emplace_back();
-      const auto& slice = *texture.slice;
-      const auto& output = *texture.output;
-      json_texture["sheetIndex"] = slice.sheet->index;
-      json_texture["sliceIndex"] = texture.slice->sheet_index;
-      json_texture["path"] = path_to_utf8(settings.output_path);
-      json_texture["filename"] = path_to_utf8(
-        settings.output_path.empty() ? texture.filename :
-          std::filesystem::relative(texture.filename, settings.output_path));
-      if (!empty(output.scale)) {
-        json_texture["width"] = round_to_int(slice.width * output.scale.x);
-        json_texture["height"] = round_to_int(slice.height * output.scale.y);
-        json_texture["scale"] = std::max(output.scale.x, output.scale.y);
-      }
-      json_texture["map"] = (texture.map_index < 0 ?
-        texture.output->default_map_suffix :
-        texture.output->map_suffixes.at(to_unsigned(texture.map_index)));
-      json_texture["spriteIndices"] = slice_sprites[slice.index];
     }
     return json;
   }
@@ -292,68 +366,11 @@ void evaluate_expressions(
     std::vector<Texture>& textures,
     VariantMap& variables) {
 
-  const auto replace_variable = [&](std::string_view variable) {
-    if (auto it = variables.find(variable); it != variables.end())
-      return variant_to_string(it->second);
-    error("unknown id '", variable, "'");
-  };
-
-  const auto evaluate_sprite_expression = [&](const Sprite& sprite, 
-      std::string& expression) {
-    replace_variables(expression, [&](std::string_view variable) {
-      if (variable == "index")
-        return std::to_string(sprite.index);
-      if (variable == "inputIndex")
-        return std::to_string(sprite.input_index);
-      if (variable == "inputSpriteIndex")
-        return std::to_string(sprite.input_sprite_index);
-      if (variable == "sheet.id")
-        return sprite.sheet->id;
-
-      // "dir/file 01.png"
-      if (variable == "source.filename")
-        return path_to_utf8(sprite.source->filename());
-
-      // "dir/file 01"
-      if (variable == "source.filenameBase")
-        return remove_extension(path_to_utf8(sprite.source->filename()));
-
-      // "file 01"
-      if (variable == "source.filenameStem")
-        return remove_extension(
-          path_to_utf8(sprite.source->filename().filename()));
-
-      // "dir_file_01"
-      if (variable == "source.filenameId")
-        return make_identifier(remove_extension(
-          path_to_utf8(sprite.source->filename())));
-
-      // "dir"
-      if (variable == "source.dirname")
-        return path_to_utf8(sprite.source->filename().parent_path());
-
-      return replace_variable(variable);
-    });
-  };
-
-  const auto evaluate_slice_expression = [&](const Slice& slice, 
-      std::string& expression) {
-    replace_variables(expression, [&](std::string_view variable) {
-      if (variable == "index")
-        return std::to_string(slice.index);
-      if (variable == "sheet.id")
-        return slice.sheet->id;
-      if (variable == "sprite.id")
-        return (slice.sprites.empty() ? "" : slice.sprites[0].id);
-      return replace_variable(variable);
-    });
-  };
-
   for (auto& sprite : sprites)
     try {
-      evaluate_sprite_expression(sprite, sprite.id);
+      evaluate_sprite_expression(sprite, sprite.id, variables);
       for (auto& [key, value] : sprite.tags)
-        evaluate_sprite_expression(sprite, value);
+        evaluate_sprite_expression(sprite, value, variables);
     }
     catch (const std::exception& ex) {
       warning(ex.what(), sprite.warning_line_number);
@@ -362,7 +379,7 @@ void evaluate_expressions(
   for (auto& texture : textures)
     try {
       auto filename = path_to_utf8(texture.filename);
-      evaluate_slice_expression(*texture.slice, filename);
+      evaluate_slice_expression(*texture.slice, filename, variables);
       texture.filename = utf8_to_path(filename);
     }
     catch (const std::exception& ex) {
