@@ -73,6 +73,8 @@ void restore_untransformed_sources(std::vector<Sprite>& sprites) {
     if (sprite.untransformed_source) {
       sprite.source = std::move(sprite.untransformed_source);
       sprite.source_rect = sprite.untransformed_source_rect;
+      // source is not trimmed when trimming after transformation
+      sprite.trimmed_source_rect = sprite.source_rect;
     }
 }
 
