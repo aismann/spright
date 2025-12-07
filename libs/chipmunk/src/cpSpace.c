@@ -119,7 +119,7 @@ cpSpaceAlloc(void)
 cpSpace*
 cpSpaceInit(cpSpace *space)
 {
-#ifndef NDEBUG
+#if 0 && !defined(NDEBUG)
 	static cpBool done = cpFalse;
 	if(!done){
 		printf("Initializing cpSpace - Chipmunk v%s (Debug Enabled)\n", cpVersionString);

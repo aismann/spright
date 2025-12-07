@@ -492,22 +492,26 @@ void apply_definition(Definition definition,
       break;
     }
     case Definition::grid:
-    case Definition::grid_vertical:
+    case Definition::grid_vertical: {
       // allow cell size of one dimension to be zero
-      state.grid = check_size(true);
-      check((state.grid.x >= 0 && state.grid.y >= 0) &&
-            (state.grid.x > 0 || state.grid.y > 0), "invalid grid");
+      const auto size = check_size(true);
+      check((size.x >= 0 && size.y >= 0) &&
+            (size.x > 0 || size.y > 0), "invalid grid");
+      state.grid = size;
       state.grid_vertical = (definition == Definition::grid_vertical);
       break;
+    }
 
     case Definition::grid_cells:
-    case Definition::grid_cells_vertical:
+    case Definition::grid_cells_vertical: {
       // allow cell count in one dimension to be zero
-      state.grid_cells = check_size(false);
-      check((state.grid_cells.x >= 0 && state.grid_cells.y >= 0) &&
-            (state.grid_cells.x > 0 || state.grid_cells.y > 0), "invalid grid");
+      const auto size = check_size(false);
+      check((size.x >= 0 && size.y >= 0) &&
+            (size.x > 0 || size.y > 0), "invalid grid");
+      state.grid_cells = size;
       state.grid_vertical = (definition == Definition::grid_cells_vertical);
       break;
+    }
 
     case Definition::grid_offset:
       state.grid_offset.x = check_int();
@@ -546,11 +550,13 @@ void apply_definition(Definition definition,
       }
       break;
 
-    case Definition::span:
+    case Definition::span: {
       check(has_grid(state), "span is only valid in grid");
-      state.span = check_size(false);
-      check(state.span.x > 0 && state.span.y > 0, "invalid span");
+      const auto size = check_size(false);
+      check(size.x > 0 && size.y > 0, "invalid span");
+      state.span = size;
       break;
+    }
 
     case Definition::atlas:
       state.atlas_merge_distance = (arguments_left() ? check_uint() : 0);
@@ -622,10 +628,12 @@ void apply_definition(Definition definition,
       }
       break;
 
-    case Definition::trim_threshold:
-      state.trim_threshold = check_uint();
-      check(state.trim_threshold >= 1 && state.trim_threshold <= 255, "invalid threshold");
+    case Definition::trim_threshold: {
+      const auto value = check_uint();
+      check(value >= 1 && value <= 255, "invalid threshold");
+      state.trim_threshold = value;
       break;
+    }
 
     case Definition::trim_channel: {
       const auto channel = check_string();
@@ -652,11 +660,12 @@ void apply_definition(Definition definition,
       state.min_bounds = check_size(true);
       break;
 
-    case Definition::divisible_bounds:
-      state.divisible_bounds = check_size(true);
-      check(state.divisible_bounds.x >= 1 && state.divisible_bounds.y >= 1, 
-        "invalid divisor");
+    case Definition::divisible_bounds: {
+      const auto size = check_size(true);;
+      check(size.x >= 1 && size.y >= 1, "invalid divisor");
+      state.divisible_bounds = size;
       break;
+    }
 
     case Definition::common_bounds:
       state.common_bounds = (arguments_left() ? check_string() : "ALL");

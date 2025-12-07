@@ -65,7 +65,7 @@ namespace {
       { -1, -1, to_real(image_mono.width() + 1), to_real(image_mono.height() + 1) },
       to_unsigned(image_mono.width() + 3),
       to_unsigned(image_mono.height() + 3),
-      threshold - 1,
+      std::max(threshold, 1) - 1,
       reinterpret_cast<cpMarchSegmentFunc>(cpPolylineSetCollectSegment), outlines,
       sample, &image_mono);
 
