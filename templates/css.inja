@@ -8,9 +8,9 @@
 ## for spriteIndex in texture.spriteIndices
 {% set sprite=at(sprites, spriteIndex) %}
 .{{ sheet.id }}.{{ sprite.id }} {
-	width: {{ sprite.trimmedRect.w }}px;
-	height: {{ sprite.trimmedRect.h }}px;
-	background-position: -{{ sprite.trimmedRect.x }}px -{{ sprite.trimmedRect.y }}px;
+	width: {{ sprite.rect.w }}px;
+	height: {{ sprite.rect.h }}px;
+	background-position: -{{ sprite.rect.x }}px -{{ sprite.rect.y }}px;
 }
 ## endfor
 ## endfor

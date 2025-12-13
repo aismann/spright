@@ -14,12 +14,12 @@ namespace spright {
 
 namespace {
   const RGBA& checked_rgba_at(ImageView<const RGBA> image_rgba, const Point& p) {
-    check(containing(image_rgba.bounds(), p));
+    check(containing(image_rgba.rect(), p));
     return image_rgba.value_at(p);
   }
 
   RGBA& checked_rgba_at(ImageView<RGBA> image_rgba, const Point& p) {
-    check(containing(image_rgba.bounds(), p));
+    check(containing(image_rgba.rect(), p));
     return image_rgba.value_at(p);
   }
 
@@ -167,7 +167,7 @@ namespace {
   RGBAF sample_bilinear(ImageView<const RGBAF> image, const PointF& point,
       const RGBAF& background) {
     const auto sample = [&](const Point& p) {
-      return (containing(image.bounds(), p) ? image.value_at(p) : background);
+      return (containing(image.rect(), p) ? image.value_at(p) : background);
     };
     const auto int_remainder = [](real value) {
       const auto i = std::floor(value);
@@ -233,7 +233,7 @@ namespace {
     return rotate_image_sample(image_rgbaf, angle, 
       [&](const PointF& pos) {
         const auto point = Point(round_to_int(pos.x), round_to_int(pos.y));
-        return (containing(image_rgbaf.bounds(), point) ? 
+        return (containing(image_rgbaf.rect(), point) ? 
           image_rgbaf.value_at(point) : background_rgbaf);
       });
   }
@@ -241,7 +241,7 @@ namespace {
 
 Image clone_image(const Image& image, const Rect& rect, int padding) {
   if (empty(rect))
-    return clone_image(image, image.bounds(), padding);
+    return clone_image(image, image.rect(), padding);
   check_rect(image, rect);
   auto clone = Image(image.type(), rect.w + padding * 2, rect.h + padding * 2);
   if (padding)
@@ -256,8 +256,8 @@ void copy_rect(const Image& source, const Rect& source_rect, Image& dest, int dx
     const auto dest_view = dest.view<Value>();
     const auto [sx, sy, w, h] = source_rect;
     const auto dest_rect = Rect{ dx, dy, w, h };
-    if (source_rect == source.bounds() &&
-        dest_rect == dest.bounds() &&
+    if (source_rect == source.rect() &&
+        dest_rect == dest.rect() &&
         source_rect == dest_rect) {
       std::memcpy(dest_view.values(), source_view.values(),
         to_unsigned(w * h) * sizeof(Value));
@@ -361,7 +361,7 @@ void extrude_rect(Image& image, const Rect& rect, int count, WrapMode mode,
 
 bool is_opaque(const Image& image, const Rect& rect) {
   if (empty(rect))
-    return is_opaque(image, image.bounds());
+    return is_opaque(image, image.rect());
 
   return all_of(image.view<RGBA>(), rect,
     [](const RGBA& rgba) { return (rgba.a == 255); });
@@ -369,7 +369,7 @@ bool is_opaque(const Image& image, const Rect& rect) {
 
 bool is_fully_transparent(const Image& image, int threshold, const Rect& rect) {
   if (empty(rect))
-    return is_fully_transparent(image, threshold, image.bounds());
+    return is_fully_transparent(image, threshold, image.rect());
 
   return all_of(image.view<RGBA>(), rect, 
     [&](const RGBA& rgba) { return (rgba.a < threshold); });
@@ -377,7 +377,7 @@ bool is_fully_transparent(const Image& image, int threshold, const Rect& rect) {
 
 bool is_fully_black(const Image& image, int threshold, const Rect& rect) {
   if (empty(rect))
-    return is_fully_black(image, threshold, image.bounds());
+    return is_fully_black(image, threshold, image.rect());
 
   return all_of(image.view<RGBA>(), rect,
     [&](const RGBA& rgba) { return (to_gray(rgba) < threshold); });
@@ -401,9 +401,9 @@ bool is_identical(const Image& image_a, const Rect& rect_a, const Image& image_b
   return true;
 }
 
-Rect get_used_bounds(const Image& image, bool gray_levels, int threshold, const Rect& rect) {
+Rect get_used_rect(const Image& image, bool gray_levels, int threshold, const Rect& rect) {
   if (empty(rect))
-    return get_used_bounds(image, gray_levels, threshold, image.bounds());
+    return get_used_rect(image, gray_levels, threshold, image.rect());
 
   const auto x1 = rect.x + rect.w - 1;
   const auto y1 = rect.y + rect.h - 1;
@@ -460,7 +460,7 @@ std::vector<Rect> find_islands(const Image& image, int merge_distance,
     bool gray_levels, const Rect& rect) {
   if (empty(rect))
     return find_islands(image, merge_distance, gray_levels,
-      get_used_bounds(image, gray_levels));
+      get_used_rect(image, gray_levels));
 
   auto levels = (gray_levels ?
     get_gray_levels(image, rect) :
@@ -554,7 +554,7 @@ void bleed_alpha(Image& image) {
 
 Image get_alpha_levels(const Image& image, const Rect& rect) {
   if (empty(rect))
-    return get_alpha_levels(image, get_used_bounds(image, false));
+    return get_alpha_levels(image, get_used_rect(image, false));
   check_rect(image, rect);
 
   auto result = Image(ImageType::Mono, rect.w, rect.h);
@@ -567,7 +567,7 @@ Image get_alpha_levels(const Image& image, const Rect& rect) {
 
 Image get_gray_levels(const Image& image, const Rect& rect) {
   if (empty(rect))
-    return get_gray_levels(image, get_used_bounds(image, true));
+    return get_gray_levels(image, get_used_rect(image, true));
   check_rect(image, rect);
 
   auto result = Image(ImageType::Mono, rect.w, rect.h);
@@ -618,7 +618,7 @@ Image resize_image(const Image& image, const SizeF& scale, ScaleFilter filter) {
 
 Image convert_to_linear(const Image& image, const Rect& rect) {
   if (empty(rect))
-    return convert_to_linear(image, image.bounds());
+    return convert_to_linear(image, image.rect());
   check_rect(image, rect);
 
   auto result = Image(ImageType::RGBAF, rect.w, rect.h);
@@ -630,7 +630,7 @@ Image convert_to_linear(const Image& image, const Rect& rect) {
 
 Image convert_to_srgb(const Image& image, const Rect& rect) {
   if (empty(rect))
-    return convert_to_srgb(image, image.bounds());
+    return convert_to_srgb(image, image.rect());
   check_rect(image, rect);
 
   auto result = Image(ImageType::RGBA, rect.w, rect.h);

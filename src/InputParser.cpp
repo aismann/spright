@@ -48,15 +48,15 @@ namespace {
 
   void validate_sprite(const Sprite& sprite) {
     const auto& rect = sprite.source_rect;
-    const auto& bounds = sprite.source->bounds();
-    const auto intersected = intersect(bounds, rect);
+    const auto& source = sprite.source->rect();
+    const auto intersected = intersect(source, rect);
     if (rect != intersected) {
       auto message = std::ostringstream();
       message << "sprite outside source (";
-      if (rect.x0() < bounds.x0())      message << "x: " << rect.x0() << " < " << bounds.x0();
-      else if (rect.y0() < bounds.y0()) message << "y: " << rect.y0() << " < " << bounds.y0();
-      else if (rect.x1() > bounds.x1()) message << "x: " << rect.x1() << " > " << bounds.x1();
-      else if (rect.y1() > bounds.y1()) message << "y: " << rect.y1() << " > " << bounds.y1();
+      if (rect.x0() < source.x0())      message << "x: " << rect.x0() << " < " << source.x0();
+      else if (rect.y0() < source.y0()) message << "y: " << rect.y0() << " < " << source.y0();
+      else if (rect.x1() > source.x1()) message << "x: " << rect.x1() << " > " << source.x1();
+      else if (rect.y1() > source.y1()) message << "y: " << rect.y1() << " > " << source.y1();
       message << ")";
       error(message.str());
     }
@@ -177,8 +177,8 @@ void InputParser::sprite_ends(State& state) {
   const auto rect =
     (!empty(state.rect) ? state.rect :
      has_grid(state) ? intersect_overlapping(
-       deduce_rect_from_grid(state), source->bounds()) :
-     source->bounds());
+       deduce_rect_from_grid(state), source->rect()) :
+     source->rect());
 
   const auto advance = [&]() {
     check(m_current_sequence_index < state.source_filenames.count(), 
@@ -216,10 +216,11 @@ void InputParser::sprite_ends(State& state) {
   sprite.trim_gray_levels = state.trim_gray_levels;
   sprite.crop = state.crop;
   sprite.crop_pivot = state.crop_pivot;
+  sprite.margin = state.margin;
   sprite.extrude = state.extrude;
-  sprite.min_bounds = state.min_bounds;
-  sprite.divisible_bounds = state.divisible_bounds;
-  sprite.common_bounds = state.common_bounds;
+  sprite.min_size = state.min_size;
+  sprite.divisible_size = state.divisible_size;
+  sprite.common_size = state.common_size;
   sprite.align = state.align;
   sprite.align_pivot = state.align_pivot;
   sprite.transforms = state.transforms;
@@ -315,21 +316,21 @@ void InputParser::deduce_grid_size(State& state) {
   if (state.grid.x > 0 && state.grid.y > 0)
     return;
 
-  const auto bounds = get_grid_bounds(state);
+  const auto grid_rect = get_grid_rect(state);
   if (state.grid_cells.x > 0 || state.grid_cells.y > 0) {
     const auto sx = (state.grid_cells.x > 0 ?
-      div_ceil(bounds.w + state.grid_spacing.x, 
+      div_ceil(grid_rect.w + state.grid_spacing.x, 
         state.grid_cells.x) - state.grid_spacing.x : 0);
     const auto sy = (state.grid_cells.y > 0 ?
-      div_ceil(bounds.h + state.grid_spacing.y, 
+      div_ceil(grid_rect.h + state.grid_spacing.y, 
         state.grid_cells.y) - state.grid_spacing.y : 0);
     state.grid.x = (sx ? sx : sy);
     state.grid.y = (sy ? sy : sx);
   }
   if (state.grid.x <= 0)
-    state.grid.x = bounds.w;
+    state.grid.x = grid_rect.w;
   if (state.grid.y <= 0)
-    state.grid.y = bounds.h;
+    state.grid.y = grid_rect.h;
 }
 
 Rect InputParser::deduce_rect_from_grid(State& state) {
@@ -343,14 +344,14 @@ Rect InputParser::deduce_rect_from_grid(State& state) {
   };
 }
 
-Rect InputParser::get_grid_bounds(const State& state) {
+Rect InputParser::get_grid_rect(const State& state) {
   const auto source = get_source(state);
-  auto bounds = source->bounds();
-  bounds.x += state.grid_offset.x;
-  bounds.y += state.grid_offset.y;
-  bounds.w -= state.grid_offset.x + state.grid_offset_bottom_right.x;
-  bounds.h -= state.grid_offset.y + state.grid_offset_bottom_right.y;
-  return bounds;
+  auto rect = source->rect();
+  rect.x += state.grid_offset.x;
+  rect.y += state.grid_offset.y;
+  rect.w -= state.grid_offset.x + state.grid_offset_bottom_right.x;
+  rect.h -= state.grid_offset.y + state.grid_offset_bottom_right.y;
+  return rect;
 }
 
 void InputParser::deduce_grid_sprites(State& state) {
@@ -365,11 +366,11 @@ void InputParser::deduce_grid_sprites(State& state) {
     auto cells_x = state.grid_cells.x;
     auto cells_y = state.grid_cells.y;
     if (!cells_x || !cells_y) {
-      const auto bounds = get_grid_bounds(state);
+      const auto grid_rect = get_grid_rect(state);
       if (!cells_x)
-        cells_x = ceil(bounds.w, stride.x) / stride.x;
+        cells_x = ceil(grid_rect.w, stride.x) / stride.x;
       if (!cells_y)
-        cells_y = ceil(bounds.h, stride.y) / stride.y;
+        cells_y = ceil(grid_rect.h, stride.y) / stride.y;
     }
     return std::make_pair(cells_x, cells_y);
   }();
@@ -393,7 +394,7 @@ void InputParser::deduce_grid_sprites(State& state) {
     auto output_offset = (x != 0);
     auto skipped = 0;
     for (; x < cells_x; x += span_x) {      
-      const auto rect = intersect(deduce_rect_from_grid(state), source->bounds());
+      const auto rect = intersect(deduce_rect_from_grid(state), source->rect());
 
       if (empty(rect) ||
           (state.trim_gray_levels ?
@@ -444,7 +445,7 @@ void InputParser::deduce_atlas_sprites(State& state) {
     if (m_settings.mode == Mode::autocomplete) {
       auto& os = m_autocomplete_output;
       os << state.indent << "sprite \n";
-      if (rect != source->bounds())
+      if (rect != source->rect())
         os << state.indent << m_detected_indentation << "rect "
           << rect.x << " " << rect.y << " "
           << rect.w << " " << rect.h << "\n";

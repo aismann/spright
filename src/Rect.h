@@ -100,6 +100,12 @@ struct MarginT {
   T y1{ };
 
   MarginT() = default;
+  explicit constexpr MarginT(T w)
+    : MarginT(w, w) {
+  }
+  constexpr MarginT(T h, T v)
+    : MarginT(h, v, h, v) {
+  }
   constexpr MarginT(T x0, T y0, T x1, T y1)
     : x0(x0), y0(y0), x1(x1), y1(y1) {
   }
@@ -117,7 +123,6 @@ using MarginF = MarginT<real>;
 constexpr bool empty(const Size& size) { return (size.x == 0 || size.y == 0); }
 constexpr bool empty(const SizeF& size) { return (size.x == 0 || size.y == 0); }
 constexpr bool empty(const Rect& rect) { return (rect.w == 0 || rect.h == 0); }
-constexpr bool empty(const Margin& margin) { return (margin.x0 == 0 && margin.y0 == 0 && margin.x1 && margin.y1); }
 
 constexpr PointF rotate_cw(const PointF& point, real width) {
   return { width - point.y, point.x };

@@ -37,7 +37,7 @@ void pack_lines(const SheetPtr& sheet, SpriteSpan sprites,
   auto it = first_sprite;
   for (; it != sprites.end(); ++it) {
     auto& sprite = *it;
-    size = sprite.bounds;
+    size = sprite.size;
 
     if (pos_d + size_d > max_d) {
       pos_d = 0;
@@ -55,8 +55,8 @@ void pack_lines(const SheetPtr& sheet, SpriteSpan sprites,
         pos.y + size.y > max_height)
       break;
 
-    sprite.trimmed_rect.x = pos.x + sheet->border_padding;
-    sprite.trimmed_rect.y = pos.y + sheet->border_padding;
+    sprite.rect.x = pos.x + sheet->border_padding;
+    sprite.rect.y = pos.y + sheet->border_padding;
 
     pos_d += size_d + sheet->shape_padding;
     line_size = std::max(line_size, size_p + sheet->shape_padding);

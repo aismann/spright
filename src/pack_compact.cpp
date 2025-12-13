@@ -36,15 +36,15 @@ namespace {
       const auto moment = INFINITY;
       auto body = bodies.emplace_back(cpSpaceAddBody(space, cpBodyNew(mass, moment))).get();
       cpBodySetPosition(body, {
-        to_real(sprite.trimmed_rect.x),
-        to_real(sprite.trimmed_rect.y),
+        to_real(sprite.rect.x),
+        to_real(sprite.rect.y),
       });
 
       vertices.clear();
       std::transform(begin(sprite.vertices), end(sprite.vertices),
         std::back_inserter(vertices), [&](PointF vertex) {
           if (sprite.rotated)
-            vertex = rotate_cw(vertex, sprite.trimmed_rect.h);
+            vertex = rotate_cw(vertex, sprite.rect.h);
           return cpVect{ vertex.x, vertex.y };
         });
       shapes.emplace_back(cpSpaceAddShape(space, cpPolyShapeNew(body,
@@ -61,8 +61,8 @@ namespace {
     for (const auto& body : bodies) {
       auto& sprite = slice.sprites[i++];
       const auto position = cpBodyGetPosition(body.get());
-      sprite.trimmed_rect.x = round_to_int(position.x);
-      sprite.trimmed_rect.y = round_to_int(position.y);
+      sprite.rect.x = round_to_int(position.x);
+      sprite.rect.y = round_to_int(position.y);
     }
 
     // destroy space before shapes

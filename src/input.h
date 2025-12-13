@@ -58,7 +58,7 @@ public:
   const std::filesystem::path& filename() const { return m_filename; }
   int width() const { return m_width; }
   int height() const { return m_height; }
-  Rect bounds() const { return { 0, 0, width(), height() }; }
+  Rect rect() const { return { 0, 0, width(), height() }; }
 
   Image& image() {    
     lazy_load_image();
@@ -161,9 +161,7 @@ struct Sprite {
   SheetPtr sheet;
   ImageFilePtr source;
   MapVectorPtr maps;
-  // the logical rect on the source
   Rect source_rect{ };
-  // the actual pixels on the sources
   Rect trimmed_source_rect{ };
   AnchorF pivot{ };
   Trim trim{ Trim::none };
@@ -172,11 +170,13 @@ struct Sprite {
   bool trim_gray_levels{ };
   bool crop{ };
   bool crop_pivot{ };
+  // margin around rect, resulting in bounds
+  Margin margin{ };
   Extrude extrude{ };
-  Size min_bounds{ };
-  Size divisible_bounds{ };
-  std::string common_bounds;
-  // the offset of the trimmed rect within the sprite's bounds
+  Size min_size{ };
+  Size divisible_size{ };
+  std::string common_size;
+  // placement of the trimmed-rect in rect
   Anchor align{ };
   std::string align_pivot;
   StringMap tags;
@@ -187,13 +187,11 @@ struct Sprite {
   Rect untransformed_source_rect{ };
 
   int slice_index{ -1 };
-  // the logical rect on the output
+  // total space it allocates on the output (including padding added by extrude)
+  Size size{ };
   Rect rect{ };
-  // the actual pixels on the output. same size as the trimmed source
   Rect trimmed_rect{ };
   bool rotated{ };
-  // total space it allocates on the output
-  Size bounds{ };
   std::vector<PointF> vertices;
   int duplicate_of_index{ -1 };
 };

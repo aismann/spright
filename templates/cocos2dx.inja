@@ -19,11 +19,11 @@
 			<key>spriteOffset</key>
 			<string>{ {{sprite.trimmedSourceRect.x}}, {{sprite.trimmedSourceRect.y}} }</string>
 			<key>spriteSize</key>
-			<string>{ {{sprite.trimmedRect.w}}, {{sprite.trimmedRect.h}} }</string>
+			<string>{ {{sprite.rect.w}}, {{sprite.rect.h}} }</string>
 			<key>spriteSourceSize</key>
 			<string>{ {{sprite.trimmedSourceRect.w}}, {{sprite.trimmedSourceRect.h}} }</string>
 			<key>textureRect</key>
-			<string>{ { {{sprite.trimmedRect.x}}, {{sprite.trimmedRect.y}} }, { {{sprite.trimmedRect.w}}, {{sprite.trimmedRect.h}} } }</string>
+			<string>{ { {{sprite.rect.x}}, {{sprite.rect.y}} }, { {{sprite.rect.w}}, {{sprite.rect.h}} } }</string>
 			<key>textureRotated</key>
 			<{{ sprite.rotated }}/>
 			<key>anchor</key>

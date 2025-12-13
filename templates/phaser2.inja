@@ -22,10 +22,10 @@
         "h": {{ round(sprite.trimmedSourceRect.h * scale, 0) }}
       },
       "frame": {
-        "x": {{ round(sprite.trimmedRect.x * scale, 0) }},
-        "y": {{ round(sprite.trimmedRect.y * scale, 0) }},
-        "w": {{ round(sprite.trimmedRect.w * scale, 0) }},
-        "h": {{ round(sprite.trimmedRect.h * scale, 0) }}
+        "x": {{ round(sprite.rect.x * scale, 0) }},
+        "y": {{ round(sprite.rect.y * scale, 0) }},
+        "w": {{ round(sprite.rect.w * scale, 0) }},
+        "h": {{ round(sprite.rect.h * scale, 0) }}
       },
       "anchor": {
         "x": {{ sprite.pivot.x / sprite.rect.w }},

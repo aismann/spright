@@ -21,16 +21,16 @@ namespace {
     return std::numeric_limits<int>::max();
   }
 
-  void update_sprite_bounds(Sprite& s) {
+  void initialize_sprite_size(Sprite& s) {
     const auto size = s.trimmed_source_rect.size();
-    s.bounds.x = std::max(s.min_bounds.x,
-      ceil(size.x + 2 * s.extrude.count, s.divisible_bounds.x));
-    s.bounds.y = std::max(s.min_bounds.y,
-      ceil(size.y + 2 * s.extrude.count, s.divisible_bounds.y));
+    s.size.x = std::max(s.min_size.x,
+      ceil(size.x + 2 * s.extrude.count, s.divisible_size.x));
+    s.size.y = std::max(s.min_size.y,
+      ceil(size.y + 2 * s.extrude.count, s.divisible_size.y));
   }
 
   void update_sprite_alignment(Sprite& s) {
-    const auto margin = s.bounds - s.trimmed_source_rect.size();
+    const auto margin = s.size - s.trimmed_source_rect.size();
     switch (s.align.anchor_x) {
       case AnchorX::left:   s.align.x += 0; break;
       case AnchorX::center: s.align.x += margin.x / 2; break;
@@ -46,9 +46,9 @@ namespace {
     s.align.x = std::max(s.align.x, 0);
     s.align.y = std::max(s.align.y, 0);
 
-    // expand bounds by over-alignment
-    s.bounds.x = std::max(s.bounds.x, s.trimmed_source_rect.w + s.align.x);
-    s.bounds.y = std::max(s.bounds.y, s.trimmed_source_rect.h + s.align.y);
+    // expand size by over-alignment
+    s.size.x = std::max(s.size.x, s.trimmed_source_rect.w + s.align.x);
+    s.size.y = std::max(s.size.y, s.trimmed_source_rect.h + s.align.y);
   }
 
   void update_aligned_pivot(std::vector<Sprite>& sprites) {
@@ -70,53 +70,59 @@ namespace {
         auto offset = Point(max_pivot - sprite->pivot);
         sprite->align.x += offset.x;
         sprite->align.y += offset.y;
-        sprite->bounds.x += offset.x;
-        sprite->bounds.y += offset.y;
+        sprite->size.x += offset.x;
+        sprite->size.y += offset.y;
       }
     }
   }
 
-  void update_common_bounds(std::vector<Sprite>& sprites) {
+  void update_common_size(std::vector<Sprite>& sprites) {
     auto sprites_by_key = std::map<std::string, std::vector<Sprite*>>();
     for (auto& sprite : sprites)
-      if (!sprite.common_bounds.empty())
-        sprites_by_key[sprite.common_bounds].push_back(&sprite);
+      if (!sprite.common_size.empty())
+        sprites_by_key[sprite.common_size].push_back(&sprite);
 
     for (const auto& [key, sprites] : sprites_by_key) {
-      auto max_bounds = Size{ };
+      auto max_size = Size{ };
       for (const auto* sprite : sprites) {
-        max_bounds.x = std::max(max_bounds.x, sprite->bounds.x);
-        max_bounds.y = std::max(max_bounds.y, sprite->bounds.y);
+        max_size.x = std::max(max_size.x, sprite->size.x);
+        max_size.y = std::max(max_size.y, sprite->size.y);
       }
       for (auto* sprite : sprites)
-        sprite->bounds = max_bounds;
+        sprite->size = max_size;
     }
   }
 
   void update_sprite_rect(Sprite& s) {
+    s.rect.x = s.trimmed_source_rect.x;
+    s.rect.y = s.trimmed_source_rect.y;
+    s.rect.w = s.size.x;
+    s.rect.h = s.size.y;
+  }
+
+  void update_sprite_trimmed_rect(Sprite& s) {
+    s.trimmed_rect.x = s.rect.x;
+    s.trimmed_rect.y = s.rect.y;
     if (s.sheet && s.sheet->pack != Pack::keep) {
-      s.trimmed_rect.x += s.align.x;
-      s.trimmed_rect.y += s.align.y;
+      s.trimmed_rect.x += (!s.rotated ? s.align.x : s.align.y);
+      s.trimmed_rect.y += (!s.rotated ? s.align.y : s.align.x);
     }
     s.trimmed_rect.w = s.trimmed_source_rect.w;
     s.trimmed_rect.h = s.trimmed_source_rect.h;
+  }
 
+  void update_sprite_margin(Sprite& s) {
     if (s.crop) {
-      s.rect = s.trimmed_rect;
-    }
-    else {
-      s.rect = {
-        s.trimmed_rect.x - (s.trimmed_source_rect.x - s.source_rect.x),
-        s.trimmed_rect.y - (s.trimmed_source_rect.y - s.source_rect.y),
-        s.source_rect.w,
-        s.source_rect.h,
-      };
+      s.margin.x0 += (s.rect.x0() - s.trimmed_rect.x0());
+      s.margin.y0 += (s.rect.y0() - s.trimmed_rect.y0());
+      s.margin.x1 += (s.trimmed_rect.x1() - s.rect.x1());
+      s.margin.y1 += (s.trimmed_rect.y1() - s.rect.y1());
     }
   }
 
   void update_sprite_pivot_point(Sprite &s) {
     const auto pivot_rect = RectF(s.crop_pivot ?
-      s.trimmed_source_rect : s.source_rect);
+      s.trimmed_rect : s.rect);
     switch (s.pivot.anchor_x) {
       case AnchorX::left:   s.pivot.x += 0; break;
       case AnchorX::center: s.pivot.x += pivot_rect.w / 2; break;
@@ -127,10 +133,10 @@ namespace {
       case AnchorY::middle: s.pivot.y += pivot_rect.h / 2; break;
       case AnchorY::bottom: s.pivot.y += pivot_rect.h; break;
     }
-    s.pivot.x -= s.rect.x - s.trimmed_rect.x;
-    s.pivot.y -= s.rect.y - s.trimmed_rect.y;
-    s.pivot.x += (pivot_rect.x - s.trimmed_source_rect.x);
-    s.pivot.y += (pivot_rect.y - s.trimmed_source_rect.y);
+    if (s.crop_pivot) {
+      s.pivot.x += (s.trimmed_rect.x - s.rect.x);
+      s.pivot.y += (s.trimmed_rect.y - s.rect.y);
+    }
   }
 
   void pack_slice(const SheetPtr& sheet,
@@ -249,24 +255,28 @@ std::pair<int, int> get_slice_max_size(const Sheet& sheet) {
 
 std::vector<Slice> pack_sprites(std::vector<Sprite>& sprites) {
   for (auto& sprite : sprites)
-    update_sprite_bounds(sprite);
+    initialize_sprite_size(sprite);
 
-  // apply alignments which affect bounds first
+  // apply alignments which affect size first
   for (auto& sprite : sprites)
     if (!sprite.align_pivot.empty())
       update_sprite_alignment(sprite);
   update_aligned_pivot(sprites);
 
-  // otherwise apply alignments after updating bounds
-  update_common_bounds(sprites);
+  // otherwise apply alignments after updating size
+  update_common_size(sprites);
   for (auto& sprite : sprites)
     if (sprite.align_pivot.empty())
       update_sprite_alignment(sprite);
 
+  for (auto& sprite : sprites)
+    update_sprite_rect(sprite);
+
   auto slices = pack_sprites_by_sheet(sprites);
 
   for (auto& sprite : sprites) {
-    update_sprite_rect(sprite);
+    update_sprite_trimmed_rect(sprite);
+    update_sprite_margin(sprite);
     update_sprite_pivot_point(sprite);
   }
 
@@ -322,10 +332,10 @@ void recompute_slice_size(Slice& slice) {
   auto max_x = 0;
   auto max_y = 0;
   for (const auto& sprite : slice.sprites) {
-    max_x = std::max(max_x, sprite.trimmed_rect.x - sprite.align.x +
-      (sprite.rotated ? sprite.bounds.y : sprite.bounds.x));
-    max_y = std::max(max_y, sprite.trimmed_rect.y - sprite.align.y +
-      (sprite.rotated ? sprite.bounds.x : sprite.bounds.y));
+    max_x = std::max(max_x, sprite.rect.x +
+      (sprite.rotated ? sprite.size.y : sprite.size.x));
+    max_y = std::max(max_y, sprite.rect.y +
+      (sprite.rotated ? sprite.size.x : sprite.size.y));
   }
   slice.width = std::max(sheet.width, max_x + sheet.border_padding);
   slice.height = std::max(sheet.height, max_y + sheet.border_padding);

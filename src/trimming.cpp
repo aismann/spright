@@ -138,12 +138,11 @@ namespace {
   void trim_sprite(Sprite& sprite) {
     
     if (sprite.trim != Trim::none) {
-      sprite.trimmed_source_rect = get_used_bounds(sprite.source->image(),
+      sprite.trimmed_source_rect = get_used_rect(sprite.source->image(),
         sprite.trim_gray_levels, sprite.trim_threshold, sprite.source_rect);
   
-      if (!empty(sprite.trim_margin))
-        sprite.trimmed_source_rect = intersect(expand(
-          sprite.trimmed_source_rect, sprite.trim_margin), sprite.source_rect);
+      sprite.trimmed_source_rect = intersect(expand(
+        sprite.trimmed_source_rect, sprite.trim_margin), sprite.source_rect);
     }
     else {
       sprite.trimmed_source_rect = sprite.source_rect;

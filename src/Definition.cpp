@@ -90,6 +90,7 @@ std::string_view get_definition_name(Definition definition) {
     case Definition::duplicate: return "duplicate";
     case Definition::id: return "id";
     case Definition::rect: return "rect";
+    case Definition::margin: return "margin";
     case Definition::pivot: return "pivot";
     case Definition::tag: return "tag";
     case Definition::data: return "data";
@@ -100,9 +101,9 @@ std::string_view get_definition_name(Definition definition) {
     case Definition::crop: return "crop";
     case Definition::crop_pivot: return "crop-pivot";
     case Definition::extrude: return "extrude";
-    case Definition::min_bounds: return "min-bounds";
-    case Definition::divisible_bounds: return "divisible-bounds";
-    case Definition::common_bounds: return "common-bounds";
+    case Definition::min_size: return "min-size";
+    case Definition::divisible_size: return "divisible-size";
+    case Definition::common_size: return "common-size";
     case Definition::align: return "align";
     case Definition::align_pivot: return "align-pivot";
     case Definition::transform: return "transform";
@@ -169,6 +170,7 @@ Definition get_affected_definition(Definition definition) {
 
     case Definition::id:
     case Definition::rect:
+    case Definition::margin:
     case Definition::pivot:
     case Definition::tag:
     case Definition::data:
@@ -179,9 +181,9 @@ Definition get_affected_definition(Definition definition) {
     case Definition::crop:
     case Definition::crop_pivot:
     case Definition::extrude:
-    case Definition::min_bounds:
-    case Definition::divisible_bounds:
-    case Definition::common_bounds:
+    case Definition::min_size:
+    case Definition::divisible_size:
+    case Definition::common_size:
     case Definition::align:
     case Definition::align_pivot:
     case Definition::span:
@@ -266,6 +268,15 @@ void apply_definition(Definition definition,
   };
   const auto check_rect = [&]() {
     return Rect{ check_uint(), check_uint(), check_uint(), check_uint() };
+  };
+  const auto check_margin = [&]() {
+    if (arguments_left() <= 1)
+      return Margin(arguments_left() ? check_int() : 1);
+    if (arguments_left() == 2)
+      return Margin{ check_int(), check_int() };
+    if (arguments_left() == 4)
+      return Margin{ check_int(), check_int(), check_int(), check_int() };
+    return Margin{ };
   };
   const auto check_color = [&]() {
     const auto string = check_string();
@@ -595,6 +606,10 @@ void apply_definition(Definition definition,
       state.rect = check_rect();
       break;
 
+    case Definition::margin:
+      state.margin = check_margin();
+      break;
+
     case Definition::pivot:
       state.pivot = check_anchor();
       break;
@@ -610,22 +625,7 @@ void apply_definition(Definition definition,
     }
 
     case Definition::trim_margin:
-      if (arguments_left() <= 1) {
-        const auto w = (arguments_left() ? check_uint() : 1);
-        state.trim_margin = { w, w, w, w };
-      }
-      else if (arguments_left() == 2) {
-        const auto h = check_uint();
-        const auto v = check_uint();
-        state.trim_margin = { h, v, h, v };
-      }
-      else if (arguments_left() == 4) {
-        const auto x0 = check_uint();
-        const auto y0 = check_uint();
-        const auto x1 = check_uint();
-        const auto y1 = check_uint();
-        state.trim_margin = { x0, y0, x1, y1 };
-      }
+      state.trim_margin = check_margin();
       break;
 
     case Definition::trim_threshold: {
@@ -656,19 +656,19 @@ void apply_definition(Definition definition,
       state.extrude.mode = (arguments_left() ? check_wrap_mode() : WrapMode::clamp);
       break;
 
-    case Definition::min_bounds:
-      state.min_bounds = check_size(true);
+    case Definition::min_size:
+      state.min_size = check_size(true);
       break;
 
-    case Definition::divisible_bounds: {
+    case Definition::divisible_size: {
       const auto size = check_size(true);;
       check(size.x >= 1 && size.y >= 1, "invalid divisor");
-      state.divisible_bounds = size;
+      state.divisible_size = size;
       break;
     }
 
-    case Definition::common_bounds:
-      state.common_bounds = (arguments_left() ? check_string() : "ALL");
+    case Definition::common_size:
+      state.common_size = (arguments_left() ? check_string() : "ALL");
       break;
 
     case Definition::align: {

@@ -64,7 +64,7 @@ void transform_sprites(std::vector<Sprite>& sprites) {
       sprite.source = std::make_shared<ImageFile>(
         convert_to_srgb(image), sprite.source->path(), 
         sprite.source->filename());
-      sprite.source_rect = image.bounds();
+      sprite.source_rect = image.rect();
     }
 }
 

@@ -63,13 +63,16 @@ void draw_debug_info(Image& target, const Sprite& sprite, const SizeF& scale) {
 
   auto rect = scale_rect(sprite.rect);
   auto trimmed_rect = scale_rect(sprite.trimmed_rect);
+  auto bounds = scale_rect(expand(sprite.rect, sprite.margin));
   auto pivot_point = scale_point(sprite.pivot);
   if (sprite.rotated) {
     std::swap(rect.w, rect.h);
     std::swap(trimmed_rect.w, trimmed_rect.h);
-    pivot_point = rotate_cw(pivot_point, rect.w - 1);
+    std::swap(bounds.w, bounds.h);
+    pivot_point = rotate_cw(pivot_point, rect.w);
   }
   draw_rect(target, round(trimmed_rect), RGBA{ 255, 255, 0, 128 });
+  draw_rect(target, round(bounds), RGBA{ 0, 0, 255, 128 });
     
   // scale point coordinates, so bottom right is inside sprite
   // (similar to 1.0 for texture coordinates...)

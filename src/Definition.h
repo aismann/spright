@@ -47,6 +47,7 @@ enum class Definition {
   duplicate,
   id,
   rect,
+  margin,
   pivot,
   tag,
   data,
@@ -57,9 +58,9 @@ enum class Definition {
   crop,
   crop_pivot,
   extrude,
-  min_bounds,
-  divisible_bounds,
-  common_bounds,
+  min_size,
+  divisible_size,
+  common_size,
   align,
   align_pivot,
 
@@ -119,6 +120,7 @@ struct State {
   int atlas_merge_distance{ -1 };
   AnchorF pivot{ { 0, 0 }, AnchorX::center, AnchorY::middle };
   Rect rect{ };
+  Margin margin{ };
   Trim trim{ Trim::rect };
   int trim_threshold{ 1 };
   Margin trim_margin{ };
@@ -126,9 +128,9 @@ struct State {
   bool crop{ };
   bool crop_pivot{ };
   Extrude extrude{ };
-  Size min_bounds{ };
-  Size divisible_bounds{ 1, 1 };
-  std::string common_bounds;
+  Size min_size{ };
+  Size divisible_size{ 1, 1 };
+  std::string common_size;
   Anchor align{ { 0, 0 }, AnchorX::center, AnchorY::middle };
   std::string align_pivot;
 

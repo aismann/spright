@@ -86,6 +86,15 @@ namespace {
     return json_rect;
   }
 
+  inja::json json_margin(const Margin& margin) {
+    auto json_margin = inja::json::object();
+    json_margin["l"] = margin.x0;
+    json_margin["t"] = margin.y0;
+    json_margin["r"] = margin.x1;
+    json_margin["b"] = margin.y1;
+    return json_margin;
+  }
+
   inja::json json_variant_map(const VariantMap& map) {
     auto json_map = inja::json::object();
     for (const auto& [key, value] : map)
@@ -182,6 +191,7 @@ namespace {
         json_sprite["trimmedRect"] = json_rect(sprite->trimmed_rect);
         json_sprite["trimmedSourceRect"] = json_rect(sprite->trimmed_source_rect);
         json_sprite["pivot"] = json_point(sprite->pivot);
+        json_sprite["margin"] = json_margin(sprite->margin);
         json_sprite["rotated"] = sprite->rotated;
         json_sprite["vertices"] = json_compact_point_list(sprite->vertices);
         slice_sprites[slice_index].push_back(sprite_index);

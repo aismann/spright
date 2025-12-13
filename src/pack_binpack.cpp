@@ -12,7 +12,7 @@ void pack_binpack(const SheetPtr& sheet_ptr, SpriteSpan sprites,
   auto pack_sizes = std::vector<rect_pack::Size>();
   pack_sizes.reserve(sprites.size());
   for (const auto& sprite : sprites) {
-    auto size = sprite.bounds;
+    auto size = sprite.size;
     size.x += sheet.shape_padding;
     size.y += sheet.shape_padding;
     pack_sizes.push_back({ to_int(pack_sizes.size()), size.x, size.y });
@@ -43,8 +43,8 @@ void pack_binpack(const SheetPtr& sheet_ptr, SpriteSpan sprites,
       auto& sprite = sprites[to_unsigned(pack_rect.id)];
       sprite.rotated = pack_rect.rotated;
       sprite.slice_index = slice_index;
-      sprite.trimmed_rect.x = pack_rect.x;
-      sprite.trimmed_rect.y = pack_rect.y;
+      sprite.rect.x = pack_rect.x;
+      sprite.rect.y = pack_rect.y;
     }
     ++slice_index;
   }

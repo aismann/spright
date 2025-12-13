@@ -31,7 +31,7 @@ private:
   MapVectorPtr get_maps(const State& state, const ImageFilePtr& source);
   void set_transform(const std::string& transform_id, TransformPtr transform);
   TransformPtr get_transform(const std::string& transform_id);
-  Rect get_grid_bounds(const State& state);
+  Rect get_grid_rect(const State& state);
   bool should_autocomplete(const std::string& filename, bool is_update) const;
   bool overlaps_sprite_or_skipped_rect(const Rect& rect) const;
   void sprite_ends(State& state);

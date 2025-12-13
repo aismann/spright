@@ -68,7 +68,7 @@ public:
   ImageType type() const { return m_type; }
   int width() const { return m_width; }
   int height() const { return m_height; }
-  Rect bounds() const { return { 0, 0, width(), height() }; }
+  Rect rect() const { return { 0, 0, width(), height() }; }
   span<const std::byte> data() const { return { m_data.get(), size_bytes() }; }
   span<std::byte> data() { return { m_data.get(), size_bytes() }; }
   size_t size_bytes() const { return static_cast<size_t>(m_width * m_height) * pixel_size(); }
@@ -100,7 +100,7 @@ public:
   ImageType type() const { return m_image->type(); }
   int width() const { return m_image->width(); }
   int height() const { return m_image->height(); }
-  Rect bounds() const { return { 0, 0, width(), height() }; }
+  Rect rect() const { return { 0, 0, width(), height() }; }
   Value* values() const { 
     return reinterpret_cast<Value*>(m_image->data().data()); }
   Value* values_at(int x, int y) const { return values() + (y * width() + x); }
@@ -167,12 +167,12 @@ void Image::view(F&& func) {
 
 inline void check(bool inside) {
   if (!inside)
-    throw std::logic_error("access outside image bounds");
+    throw std::logic_error("access outside image rect");
 }
 
 template<typename ImageOrView>
 void check_rect(const ImageOrView& image, const Rect& rect) {
-  check(containing(image.bounds(), rect));
+  check(containing(image.rect(), rect));
 }
 
 // io
@@ -204,7 +204,7 @@ bool is_opaque(const Image& image, const Rect& rect = { });
 bool is_fully_transparent(const Image& image, int threshold = 1, const Rect& rect = { });
 bool is_fully_black(const Image& image, int threshold = 1, const Rect& rect = { });
 bool is_identical(const Image& image_a, const Rect& rect_a, const Image& image_b, const Rect& rect_b);
-Rect get_used_bounds(const Image& image, bool gray_levels, int threshold = 1, const Rect& rect = { });
+Rect get_used_rect(const Image& image, bool gray_levels, int threshold = 1, const Rect& rect = { });
 RGBA guess_colorkey(const Image& image);
 void replace_color(Image& image, RGBA original, RGBA color);
 std::vector<Rect> find_islands(const Image& image, int merge_distance, 
