@@ -104,8 +104,15 @@ namespace {
     s.trimmed_rect.x = s.rect.x;
     s.trimmed_rect.y = s.rect.y;
     if (s.sheet && s.sheet->pack != Pack::keep) {
-      s.trimmed_rect.x += (!s.rotated ? s.align.x : s.align.y);
-      s.trimmed_rect.y += (!s.rotated ? s.align.y : s.align.x);
+      if (!s.rotated) {
+        s.trimmed_rect.x += s.align.x;
+        s.trimmed_rect.y += s.align.y;
+      }
+      else {
+        const auto margin = s.size - s.trimmed_source_rect.size();
+        s.trimmed_rect.x += (margin.y - s.align.y);
+        s.trimmed_rect.y += s.align.x;
+      }
     }
     s.trimmed_rect.w = s.trimmed_source_rect.w;
     s.trimmed_rect.h = s.trimmed_source_rect.h;
@@ -134,8 +141,8 @@ namespace {
       case AnchorY::bottom: s.pivot.y += pivot_rect.h; break;
     }
     if (s.crop_pivot) {
-      s.pivot.x += (s.trimmed_rect.x - s.rect.x);
-      s.pivot.y += (s.trimmed_rect.y - s.rect.y);
+      s.pivot.x += s.align.x;
+      s.pivot.y += s.align.y;
     }
   }
 
