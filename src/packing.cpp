@@ -39,10 +39,9 @@ namespace {
 
   void initialize_sprite_size(Sprite& s) {
     const auto size = s.trimmed_source_rect.size();
-    s.size.x = std::max(s.min_size.x,
-      ceil(size.x + 2 * s.extrude.count, s.divisible_size.x));
-    s.size.y = std::max(s.min_size.y,
-      ceil(size.y + 2 * s.extrude.count, s.divisible_size.y));
+    s.size.x = std::max(s.min_size.x, ceil(size.x, s.divisible_size.x));
+    s.size.y = std::max(s.min_size.y, ceil(size.y, s.divisible_size.y));
+    s.pack_margin = Margin{ s.extrude.count };
   }
 
   void update_sprite_alignment(Sprite& s) {
@@ -119,6 +118,16 @@ namespace {
     s.rect.h = s.size.y;
   }
 
+  void apply_pack_margin_before_packing(Sprite& s) {
+    s.size.x += s.pack_margin.x0 + s.pack_margin.x1;
+    s.size.y += s.pack_margin.y0 + s.pack_margin.y1;
+  }
+
+  void apply_pack_margin_after_packing(Sprite& s) {
+    s.rect.x += s.pack_margin.x0;
+    s.rect.y += s.pack_margin.y0;
+  }
+
   void update_sprite_trimmed_rect(Sprite& s) {
     s.trimmed_rect.x = s.rect.x;
     s.trimmed_rect.y = s.rect.y;
@@ -133,10 +142,10 @@ namespace {
   void update_sprite_margin(Sprite& s) {
     if (s.crop) {
       // crop to trimmed rect
-      s.margin.x0 += (s.rect.x0() - s.trimmed_rect.x0());
-      s.margin.y0 += (s.rect.y0() - s.trimmed_rect.y0());
-      s.margin.x1 += (s.trimmed_rect.x1() - s.rect.x1());
-      s.margin.y1 += (s.trimmed_rect.y1() - s.rect.y1());
+      s.margin.x0 -= (s.trimmed_rect.x0() - s.rect.x0());
+      s.margin.y0 -= (s.trimmed_rect.y0() - s.rect.y0());
+      s.margin.x1 -= (s.rect.x1() - s.trimmed_rect.x1());
+      s.margin.y1 -= (s.rect.y1() - s.trimmed_rect.y1());
     }
     else {
       // expand when source had more margin (trimmed-source-rect to source-rect)
@@ -165,19 +174,24 @@ namespace {
     // when rotated correct trimmed-rect afterwards (found out empirically)
     if (s.rotated) {
       const auto margin = s.size - s.trimmed_source_rect.size();
-      s.trimmed_rect.x += -s.align.x + (margin.y - s.align.y);
+      s.trimmed_rect.x += -s.align.x + (margin.y - s.align.y - s.pack_margin.y0 - s.pack_margin.y1);
       s.trimmed_rect.y += -s.align.y + s.align.x;
     }
   }
 
   void update_sprite_pivot_point(Sprite &s) {
-    const auto pivot_rect = SizeF(s.crop_pivot ? s.trimmed_rect.size() : s.rect.size());
+    const auto bounds = expand(RectF(s.rect), s.margin);
+    const auto pivot_rect = (s.crop_pivot ? SizeF(s.trimmed_rect.size()) : bounds.size());
     const auto pivot_coords = get_anchor_coordinates(s.pivot, pivot_rect);
     s.pivot.x = pivot_coords.x;
     s.pivot.y = pivot_coords.y;
     if (s.crop_pivot) {
       s.pivot.x += s.align.x;
       s.pivot.y += s.align.y;
+    }
+    else {
+      s.pivot.x -= s.margin.x0;
+      s.pivot.y -= s.margin.y0;
     }
   }
 
@@ -311,12 +325,15 @@ std::vector<Slice> pack_sprites(std::vector<Sprite>& sprites) {
     if (sprite.align_pivot.empty())
       update_sprite_alignment(sprite);
 
-  for (auto& sprite : sprites)
+  for (auto& sprite : sprites) {
     update_sprite_rect(sprite);
+    apply_pack_margin_before_packing(sprite);
+  }
 
   auto slices = pack_sprites_by_sheet(sprites);
 
   for (auto& sprite : sprites) {
+    apply_pack_margin_after_packing(sprite);
     update_sprite_trimmed_rect(sprite);
     update_sprite_margin(sprite);
     update_sprite_pivot_point(sprite);
@@ -374,9 +391,9 @@ void recompute_slice_size(Slice& slice) {
   auto max_x = 0;
   auto max_y = 0;
   for (const auto& sprite : slice.sprites) {
-    max_x = std::max(max_x, sprite.rect.x +
+    max_x = std::max(max_x, sprite.rect.x - sprite.pack_margin.x0 +
       (sprite.rotated ? sprite.size.y : sprite.size.x));
-    max_y = std::max(max_y, sprite.rect.y +
+    max_y = std::max(max_y, sprite.rect.y - sprite.pack_margin.y0 +
       (sprite.rotated ? sprite.size.x : sprite.size.y));
   }
   slice.width = std::max(sheet.width, max_x + sheet.border_padding);

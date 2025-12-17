@@ -187,7 +187,8 @@ struct Sprite {
   Rect untransformed_source_rect{ };
 
   int slice_index{ -1 };
-  // total space it allocates on the output (including padding added by extrude)
+  Margin pack_margin{ };
+  // total space it allocates on the output (including pack margin)
   Size size{ };
   Rect rect{ };
   Rect trimmed_rect{ };
