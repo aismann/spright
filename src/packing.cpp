@@ -21,6 +21,22 @@ namespace {
     return std::numeric_limits<int>::max();
   }
 
+  template<typename T>
+  PointT<T> get_anchor_coordinates(const AnchorT<T>& anchor, const SizeT<T>& size) {
+    auto coords = PointT<T>{ anchor };
+    switch (anchor.anchor_x) {
+      case AnchorX::left:   coords.x += 0; break;
+      case AnchorX::center: coords.x += size.x / 2; break;
+      case AnchorX::right:  coords.x += size.x; break;
+    }
+    switch (anchor.anchor_y) {
+      case AnchorY::top:    coords.y += 0; break;
+      case AnchorY::middle: coords.y += size.y / 2; break;
+      case AnchorY::bottom: coords.y += size.y; break;
+    }
+    return coords;
+  }
+
   void initialize_sprite_size(Sprite& s) {
     const auto size = s.trimmed_source_rect.size();
     s.size.x = std::max(s.min_size.x,
@@ -31,16 +47,9 @@ namespace {
 
   void update_sprite_alignment(Sprite& s) {
     const auto margin = s.size - s.trimmed_source_rect.size();
-    switch (s.align.anchor_x) {
-      case AnchorX::left:   s.align.x += 0; break;
-      case AnchorX::center: s.align.x += margin.x / 2; break;
-      case AnchorX::right:  s.align.x += margin.x; break;
-    }
-    switch (s.align.anchor_y) {
-      case AnchorY::top:    s.align.y += 0; break;
-      case AnchorY::middle: s.align.y += margin.y / 2; break;
-      case AnchorY::bottom: s.align.y += margin.y; break;
-    }
+    const auto coords = get_anchor_coordinates(s.align, margin);
+    s.align.x += coords.x;
+    s.align.y += coords.y;
 
     // clamp to zero
     s.align.x = std::max(s.align.x, 0);
@@ -52,6 +61,12 @@ namespace {
   }
 
   void update_aligned_pivot(std::vector<Sprite>& sprites) {
+    const auto get_pivot_coords = [](const Sprite& s) {
+      const auto pivot_rect = SizeF(s.crop_pivot ? 
+        s.trimmed_source_rect.size() : s.source_rect.size());
+      return get_anchor_coordinates(s.pivot, pivot_rect);
+    };
+
     auto sprites_by_key = std::map<std::string, std::vector<Sprite*>>();
     for (auto& sprite : sprites)
       if (!sprite.align_pivot.empty())
@@ -63,13 +78,17 @@ namespace {
         std::numeric_limits<real>::min()
       };
       for (const auto* sprite : sprites) {
-        max_pivot.x = std::max(max_pivot.x, sprite->pivot.x);
-        max_pivot.y = std::max(max_pivot.y, sprite->pivot.y);
+        const auto pivot_coords = get_pivot_coords(*sprite);
+        max_pivot.x = std::max(max_pivot.x, pivot_coords.x);
+        max_pivot.y = std::max(max_pivot.y, pivot_coords.y);
       }
       for (auto* sprite : sprites) {
-        auto offset = Point(max_pivot - sprite->pivot);
-        sprite->align.x += offset.x;
-        sprite->align.y += offset.y;
+        const auto pivot_coords = get_pivot_coords(*sprite);
+        const auto offset = Point{ 
+          round_to_int(max_pivot.x - pivot_coords.x),
+          round_to_int(max_pivot.y - pivot_coords.y),
+        };
+        sprite->align = Anchor{ offset, AnchorX::left,  AnchorY::top };
         sprite->size.x += offset.x;
         sprite->size.y += offset.y;
       }
@@ -152,18 +171,10 @@ namespace {
   }
 
   void update_sprite_pivot_point(Sprite &s) {
-    const auto pivot_rect = RectF(s.crop_pivot ?
-      s.trimmed_rect : s.rect);
-    switch (s.pivot.anchor_x) {
-      case AnchorX::left:   s.pivot.x += 0; break;
-      case AnchorX::center: s.pivot.x += pivot_rect.w / 2; break;
-      case AnchorX::right:  s.pivot.x += pivot_rect.w; break;
-    }
-    switch (s.pivot.anchor_y) {
-      case AnchorY::top:    s.pivot.y += 0; break;
-      case AnchorY::middle: s.pivot.y += pivot_rect.h / 2; break;
-      case AnchorY::bottom: s.pivot.y += pivot_rect.h; break;
-    }
+    const auto pivot_rect = SizeF(s.crop_pivot ? s.trimmed_rect.size() : s.rect.size());
+    const auto pivot_coords = get_anchor_coordinates(s.pivot, pivot_rect);
+    s.pivot.x = pivot_coords.x;
+    s.pivot.y = pivot_coords.y;
     if (s.crop_pivot) {
       s.pivot.x += s.align.x;
       s.pivot.y += s.align.y;

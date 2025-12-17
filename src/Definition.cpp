@@ -682,6 +682,8 @@ void apply_definition(Definition definition,
 
     case Definition::align: {
       const auto anchor = check_anchor();
+      check((anchor.x >= 0 || anchor.anchor_x != AnchorX::left) &&
+            (anchor.y >= 0 || anchor.anchor_y != AnchorY::top), "invalid alignment");
       state.align = {
         Point(anchor),
         anchor.anchor_x,
