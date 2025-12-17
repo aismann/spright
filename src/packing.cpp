@@ -104,15 +104,8 @@ namespace {
     s.trimmed_rect.x = s.rect.x;
     s.trimmed_rect.y = s.rect.y;
     if (s.sheet && s.sheet->pack != Pack::keep) {
-      if (!s.rotated) {
-        s.trimmed_rect.x += s.align.x;
-        s.trimmed_rect.y += s.align.y;
-      }
-      else {
-        const auto margin = s.size - s.trimmed_source_rect.size();
-        s.trimmed_rect.x += (margin.y - s.align.y);
-        s.trimmed_rect.y += s.align.x;
-      }
+      s.trimmed_rect.x += s.align.x;
+      s.trimmed_rect.y += s.align.y;
     }
     s.trimmed_rect.w = s.trimmed_source_rect.w;
     s.trimmed_rect.h = s.trimmed_source_rect.h;
@@ -120,10 +113,41 @@ namespace {
 
   void update_sprite_margin(Sprite& s) {
     if (s.crop) {
+      // crop to trimmed rect
       s.margin.x0 += (s.rect.x0() - s.trimmed_rect.x0());
       s.margin.y0 += (s.rect.y0() - s.trimmed_rect.y0());
       s.margin.x1 += (s.trimmed_rect.x1() - s.rect.x1());
       s.margin.y1 += (s.trimmed_rect.y1() - s.rect.y1());
+    }
+    else {
+      // expand when source had more margin (trimmed-source-rect to source-rect)
+      auto source_bounds = RectF(s.source_rect);
+      auto bounds = expand(RectF(s.rect), s.margin);
+      source_bounds.x -= s.trimmed_source_rect.x;
+      source_bounds.y -= s.trimmed_source_rect.y;
+      bounds.x -= s.trimmed_rect.x;
+      bounds.y -= s.trimmed_rect.y;
+      const auto grow_w = std::max(source_bounds.w - bounds.w, 0.0);
+      const auto grow_h = std::max(source_bounds.h - bounds.h, 0.0);
+      const auto offset_x = std::max(std::min(bounds.x - source_bounds.x, grow_w), 0.0);
+      const auto offset_y = std::max(std::min(bounds.y - source_bounds.y, grow_h), 0.0);
+      s.margin.x0 += offset_x;
+      s.margin.y0 += offset_y;
+      s.margin.x1 += grow_w - offset_x;
+      s.margin.y1 += grow_h - offset_y;
+    }
+
+    // ensure non-negative bounds
+    if (s.margin.x0 + s.margin.x1 <= -s.rect.w)
+      s.margin.x0 = s.margin.x1 = -to_real(s.rect.w) / 2;
+    if (s.margin.y0 + s.margin.y1 <= -s.rect.h)
+      s.margin.y0 = s.margin.y1 = -to_real(s.rect.h) / 2;
+
+    // when rotated correct trimmed-rect afterwards (found out empirically)
+    if (s.rotated) {
+      const auto margin = s.size - s.trimmed_source_rect.size();
+      s.trimmed_rect.x += -s.align.x + (margin.y - s.align.y);
+      s.trimmed_rect.y += -s.align.y + s.align.x;
     }
   }
 

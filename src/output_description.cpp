@@ -86,7 +86,7 @@ namespace {
     return json_rect;
   }
 
-  inja::json json_margin(const Margin& margin) {
+  inja::json json_margin(const MarginF& margin) {
     auto json_margin = inja::json::object();
     json_margin["l"] = margin.x0;
     json_margin["t"] = margin.y0;

@@ -171,7 +171,7 @@ struct Sprite {
   bool crop{ };
   bool crop_pivot{ };
   // margin around rect, resulting in bounds
-  Margin margin{ };
+  MarginF margin{ };
   Extrude extrude{ };
   Size min_size{ };
   Size divisible_size{ };

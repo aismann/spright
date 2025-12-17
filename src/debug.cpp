@@ -46,6 +46,19 @@ void draw_debug_info(Image& target, const Sprite& sprite, const SizeF& scale) {
   if (empty(scale))
     return;
 
+  const auto rotate_rect = [&](Rect rect) {
+    if (sprite.rotated)
+      std::swap(rect.w, rect.h);
+    return rect;
+  };
+  const auto rotate_margin = [&](const MarginF& margin) {
+    if (sprite.rotated)
+      return MarginF{ margin.y1, margin.x0, margin.y0, margin.x1 };
+    return margin;
+  };
+  const auto rotate_point = [&](const PointF& point) {
+    return (sprite.rotated ? rotate_cw(point, sprite.rect.h) : point);
+  };
   const auto scale_rect = [&](const auto& rect) {
     return RectF{ 
       rect.x * scale.x,
@@ -61,16 +74,12 @@ void draw_debug_info(Image& target, const Sprite& sprite, const SizeF& scale) {
     };
   };
 
-  auto rect = scale_rect(sprite.rect);
-  auto trimmed_rect = scale_rect(sprite.trimmed_rect);
-  auto bounds = scale_rect(expand(sprite.rect, sprite.margin));
-  auto pivot_point = scale_point(sprite.pivot);
-  if (sprite.rotated) {
-    std::swap(rect.w, rect.h);
-    std::swap(trimmed_rect.w, trimmed_rect.h);
-    std::swap(bounds.w, bounds.h);
-    pivot_point = rotate_cw(pivot_point, rect.w);
-  }
+  const auto rect = scale_rect(rotate_rect(sprite.rect));
+  const auto trimmed_rect = scale_rect(rotate_rect(sprite.trimmed_rect));
+  const auto bounds = scale_rect(
+    expand(RectF(rotate_rect(sprite.rect)), rotate_margin(sprite.margin)));
+  const auto pivot_point = scale_point(rotate_point(sprite.pivot));
+
   draw_rect(target, round(trimmed_rect), RGBA{ 255, 255, 0, 128 });
   draw_rect(target, round(bounds), RGBA{ 0, 0, 255, 128 });
     

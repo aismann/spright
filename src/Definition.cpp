@@ -271,12 +271,21 @@ void apply_definition(Definition definition,
   };
   const auto check_margin = [&]() {
     if (arguments_left() <= 1)
-      return Margin(arguments_left() ? check_int() : 1);
+      return Margin(arguments_left() ? check_uint() : 1);
     if (arguments_left() == 2)
-      return Margin{ check_int(), check_int() };
+      return Margin{ check_uint(), check_uint() };
     if (arguments_left() == 4)
-      return Margin{ check_int(), check_int(), check_int(), check_int() };
+      return Margin{ check_uint(), check_uint(), check_uint(), check_uint() };
     return Margin{ };
+  };
+  const auto check_real_margin = [&]() {
+    if (arguments_left() <= 1)
+      return MarginF(arguments_left() ? check_real() : 1);
+    if (arguments_left() == 2)
+      return MarginF{ check_real(), check_real() };
+    if (arguments_left() == 4)
+      return MarginF{ check_real(), check_real(), check_real(), check_real() };
+    return MarginF{ };
   };
   const auto check_color = [&]() {
     const auto string = check_string();
@@ -607,7 +616,7 @@ void apply_definition(Definition definition,
       break;
 
     case Definition::margin:
-      state.margin = check_margin();
+      state.margin = check_real_margin();
       break;
 
     case Definition::pivot:

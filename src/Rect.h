@@ -132,7 +132,8 @@ constexpr Rect expand(const Rect& rect, int value) {
   return { rect.x - value, rect.y - value, rect.w + value * 2, rect.h + value * 2 };
 }
 
-constexpr Rect expand(const Rect& rect, const Margin& margin) {
+template<typename T>
+constexpr RectT<T> expand(const RectT<T>& rect, const MarginT<T>& margin) {
   return { 
     rect.x - margin.x0,
     rect.y - margin.y0, 

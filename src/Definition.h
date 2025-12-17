@@ -120,7 +120,7 @@ struct State {
   int atlas_merge_distance{ -1 };
   AnchorF pivot{ { 0, 0 }, AnchorX::center, AnchorY::middle };
   Rect rect{ };
-  Margin margin{ };
+  MarginF margin{ };
   Trim trim{ Trim::rect };
   int trim_threshold{ 1 };
   Margin trim_margin{ };
