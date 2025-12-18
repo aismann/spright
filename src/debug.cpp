@@ -89,11 +89,11 @@ void draw_debug_info(Image& target, const Sprite& sprite, const SizeF& scale) {
     scale.x - scale.x / trimmed_rect.w,
     scale.y - scale.y / trimmed_rect.h);
 
-  if (!sprite.vertices.empty()) {
+  if (!sprite.outline.empty()) {
     const auto origin = scale_point(sprite.trimmed_rect.xy());
-    for (auto i = 0u; i < sprite.vertices.size(); i++) {
-      auto v0 = sprite.vertices[i];
-      auto v1 = sprite.vertices[(i + 1) % sprite.vertices.size()];
+    for (auto i = 0u; i < sprite.outline.size(); i++) {
+      auto v0 = sprite.outline[i];
+      auto v1 = sprite.outline[(i + 1) % sprite.outline.size()];
       if (sprite.rotated) {
         v0 = rotate_cw(v0, sprite.trimmed_rect.h);
         v1 = rotate_cw(v1, sprite.trimmed_rect.h);

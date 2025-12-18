@@ -332,25 +332,25 @@ void copy_rect_rotated_cw(const Image& source, const Rect& source_rect, Image& d
 }
 
 void copy_rect(const Image& source, const Rect& source_rect, Image& dest, int dx, int dy,
-    const std::vector<PointF>& mask_vertices) {
+    const std::vector<PointF>& mask_outline) {
   const auto source_rgba = source.view<RGBA>();
   const auto dest_rgba = dest.view<RGBA>();
   const auto [sx, sy, w, h] = source_rect;
   for (auto y = 0; y < h; ++y)
     for (auto x = 0; x < w; ++x)
-      if (point_in_polygon(x + 0.5, y + 0.5, mask_vertices))
+      if (point_in_polygon(x + 0.5, y + 0.5, mask_outline))
         checked_rgba_at(dest_rgba, { dx + x, dy + y }) = 
           checked_rgba_at(source_rgba, { sx + x, sy + y });
 }
 
 void copy_rect_rotated_cw(const Image& source, const Rect& source_rect, 
-    Image& dest, int dx, int dy, const std::vector<PointF>& mask_vertices) {
+    Image& dest, int dx, int dy, const std::vector<PointF>& mask_outline) {
   const auto source_rgba = source.view<RGBA>();
   const auto dest_rgba = dest.view<RGBA>();
   const auto [sx, sy, w, h] = source_rect;
   for (auto y = 0; y < h; ++y)
     for (auto x = 0; x < w; ++x)
-      if (point_in_polygon(x + 0.5, y + 0.5, mask_vertices))
+      if (point_in_polygon(x + 0.5, y + 0.5, mask_outline))
         checked_rgba_at(dest_rgba, { dx + (h-1 - y), dy + x }) =
           checked_rgba_at(source_rgba, { sx + x, sy + y });
 }

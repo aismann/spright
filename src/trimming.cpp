@@ -14,7 +14,7 @@ namespace {
 
   PolylinePtr merge_polylines(const cpPolylineSet& polyline_set) {
     // TODO: find closest segments
-    // rotate vertices of one to begin at segment and delete end
+    // rotate outline of one to begin at segment and delete end
     // insert into other polyline at segment
 #if 0
     auto count = 0;
@@ -125,14 +125,14 @@ namespace {
   }
 
   std::vector<PointF> to_point_list(const cpPolyline& polyline) {
-    auto vertices = std::vector<PointF>();
-    vertices.reserve(to_unsigned(polyline.count));
+    auto outline = std::vector<PointF>();
+    outline.reserve(to_unsigned(polyline.count));
     for (auto i = 0; i < polyline.count; ++i)
-      vertices.push_back({
+      outline.push_back({
         polyline.verts[i].x,
         polyline.verts[i].y
       });
-    return vertices;
+    return outline;
   }
 
   void trim_sprite(Sprite& sprite) {
@@ -159,15 +159,15 @@ namespace {
       outline = simplify_polygon(*outline, 3);
       // TODO: fix expanding by non-uniform margin
       expand_polygon(*outline, sprite.trim_margin.x0);
-      sprite.vertices = to_point_list(*outline);
+      sprite.outline = to_point_list(*outline);
     }
     else {
       const auto w = to_real(sprite.trimmed_source_rect.w);
       const auto h = to_real(sprite.trimmed_source_rect.h);
-      sprite.vertices.push_back({ 0, 0 });
-      sprite.vertices.push_back({ w, 0 });
-      sprite.vertices.push_back({ w, h });
-      sprite.vertices.push_back({ 0, h });
+      sprite.outline.push_back({ 0, 0 });
+      sprite.outline.push_back({ w, 0 });
+      sprite.outline.push_back({ w, h });
+      sprite.outline.push_back({ 0, h });
     }
   }
 } // namespace

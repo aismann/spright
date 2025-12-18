@@ -30,7 +30,7 @@ namespace {
     shapes.emplace_back(cpSpaceAddShape(space, cpSegmentShapeNew(cpSpaceGetStaticBody(space), cpv(x1, y0), cpv(x1, y1), 0)));
 
     auto bodies = std::vector<BodyPtr>();
-    auto vertices = std::vector<cpVect>();
+    auto outline = std::vector<cpVect>();
     for (const auto& sprite : slice.sprites) {
       const auto mass = 1;
       const auto moment = INFINITY;
@@ -40,15 +40,15 @@ namespace {
         to_real(sprite.rect.y),
       });
 
-      vertices.clear();
-      std::transform(begin(sprite.vertices), end(sprite.vertices),
-        std::back_inserter(vertices), [&](PointF vertex) {
+      outline.clear();
+      std::transform(begin(sprite.outline), end(sprite.outline),
+        std::back_inserter(outline), [&](PointF vertex) {
           if (sprite.rotated)
             vertex = rotate_cw(vertex, sprite.rect.h);
           return cpVect{ vertex.x, vertex.y };
         });
       shapes.emplace_back(cpSpaceAddShape(space, cpPolyShapeNew(body,
-        to_int(vertices.size()), vertices.data(), cpTransformIdentity, padding)));
+        to_int(outline.size()), outline.data(), cpTransformIdentity, padding)));
     }
 
     // TODO: improve

@@ -18811,7 +18811,7 @@ class serializer
     bool dump_compact(const BasicJsonType& val) {
         if (val.m_data.m_type != value_t::string)
             return false;
-        for (auto name : { "rect", "pivot", "margin", "vertices" })
+        for (auto name : { "rect", "pivot", "margin", "outline" })
             if (*val.m_data.m_value.string == name)
                 return true;
         for (auto name : { "Rect", "Indices" })

@@ -16,8 +16,8 @@ namespace {
     return nullptr;
   }
 
-  bool has_rect_vertices(const Sprite& sprite) {
-    const auto& v = sprite.vertices;
+  bool has_rect_outline(const Sprite& sprite) {
+    const auto& v = sprite.outline;
     const auto [w, h] = sprite.trimmed_rect.size();
     return (v.size() == 4 &&
       v[0] == PointF(0, 0) &&
@@ -32,23 +32,23 @@ namespace {
       return false;
 
     if (sprite.rotated) {
-      if (has_rect_vertices(sprite)) {
+      if (has_rect_outline(sprite)) {
         copy_rect_rotated_cw(*source, sprite.trimmed_source_rect,
           target, sprite.trimmed_rect.x, sprite.trimmed_rect.y);
       }
       else {
         copy_rect_rotated_cw(*source, sprite.trimmed_source_rect,
-          target, sprite.trimmed_rect.x, sprite.trimmed_rect.y, sprite.vertices);
+          target, sprite.trimmed_rect.x, sprite.trimmed_rect.y, sprite.outline);
       }
     }
     else {
-      if (has_rect_vertices(sprite)) {
+      if (has_rect_outline(sprite)) {
         copy_rect(*source, sprite.trimmed_source_rect,
           target, sprite.trimmed_rect.x, sprite.trimmed_rect.y);
       }
       else {
         copy_rect(*source, sprite.trimmed_source_rect,
-          target, sprite.trimmed_rect.x, sprite.trimmed_rect.y, sprite.vertices);
+          target, sprite.trimmed_rect.x, sprite.trimmed_rect.y, sprite.outline);
       }
     }
 

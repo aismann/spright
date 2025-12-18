@@ -195,9 +195,9 @@ Image resize_image(const Image& image, const SizeF& scale, ScaleFilter filter);
 void copy_rect(const Image& source, const Rect& source_rect, Image& dest, int dx, int dy);
 void copy_rect_rotated_cw(const Image& source, const Rect& source_rect, Image& dest, int dx, int dy);
 void copy_rect(const Image& source, const Rect& source_rect, Image& dest, 
-  int dx, int dy, const std::vector<PointF>& mask_vertices);
+  int dx, int dy, const std::vector<PointF>& mask_outline);
 void copy_rect_rotated_cw(const Image& source, const Rect& source_rect, Image& dest, 
-  int dx, int dy, const std::vector<PointF>& mask_vertices);
+  int dx, int dy, const std::vector<PointF>& mask_outline);
 void extrude_rect(Image& image, const Rect& rect, int count, WrapMode mode, 
   bool left, bool top, bool right, bool bottom);
 bool is_opaque(const Image& image, const Rect& rect = { });

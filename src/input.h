@@ -193,7 +193,7 @@ struct Sprite {
   Rect rect{ };
   Rect trimmed_rect{ };
   bool rotated{ };
-  std::vector<PointF> vertices;
+  std::vector<PointF> outline;
   int duplicate_of_index{ -1 };
 };
 

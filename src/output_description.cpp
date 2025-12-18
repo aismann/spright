@@ -193,7 +193,7 @@ namespace {
         json_sprite["pivot"] = json_point(sprite->pivot);
         json_sprite["margin"] = json_margin(sprite->margin);
         json_sprite["rotated"] = sprite->rotated;
-        json_sprite["vertices"] = json_compact_point_list(sprite->vertices);
+        json_sprite["outline"] = json_compact_point_list(sprite->outline);
         slice_sprites[slice_index].push_back(sprite_index);
       }
       json_sprite["tags"] = sprite->tags;
