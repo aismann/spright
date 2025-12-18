@@ -237,6 +237,54 @@ namespace {
           image_rgbaf.value_at(point) : background_rgbaf);
       });
   }
+
+  template<typename T, typename Sample>
+  Image downsample_image_sample(ImageView<const T> source, const SizeF& scale, const Sample&& sample) {
+    auto dest = Image(source.type(),
+      std::max(round_to_int(source.width() * scale.x), 1),
+      std::max(round_to_int(source.height() * scale.y), 1));
+    const auto dest_view = dest.view<T>();
+
+    const auto factor = SizeF{
+      to_real(source.width()) / dest.width(),
+      to_real(source.height()) / dest.height(),
+    };
+    for (auto y = 0; y < dest.height(); ++y)
+      for (auto x = 0; x < dest.width(); ++x)
+        dest_view.value_at(Point(x, y)) = sample(RectF(x * factor.x, y * factor.y, factor.x, factor.y));
+
+    return dest;
+  }
+
+  Image downsample_image_nearest(ImageView<const RGBAF> image_rgbaf, const SizeF& scale) {
+    return downsample_image_sample(image_rgbaf, scale,
+      [&](const RectF& rect) {
+        const auto point = Point(round_to_int(rect.x + rect.w / 2), round_to_int(rect.y + rect.h / 2));
+        return image_rgbaf.value_at(point);
+      });
+  }
+
+  Image downsample_image_median(ImageView<const RGBAF> image_rgbaf, const SizeF& scale) {
+    auto buckets = std::vector<std::pair<RGBAF, size_t>>{ };
+    const auto add = [&](const RGBAF& color) {
+      const auto it = std::find_if(buckets.begin(), buckets.end(), 
+        [&](const auto& bucket) { return (bucket.first == color); });
+      if (it != buckets.end())
+        ++it->second;
+      else
+        buckets.emplace_back(color, 1);
+    };
+    return downsample_image_sample(image_rgbaf, scale,
+      [&](const RectF& rect) {
+        buckets.clear();
+        for (auto y = rect.y; y < rect.y + rect.h; y += 1.0)
+          for (auto x = rect.x; x < rect.x + rect.w; x += 1.0)
+            add(image_rgbaf.value_at(Point(round_to_int(x), round_to_int(y))));
+        const auto it = std::max_element(buckets.begin(), buckets.end(), 
+          [](const auto& a, const auto& b) { return a.second < b.second; });
+        return it->first;
+      });
+  }
 } // namespace
 
 Image clone_image(const Image& image, const Rect& rect, int padding) {
@@ -588,6 +636,12 @@ Image resize_image(const Image& image, const SizeF& scale, ScaleFilter filter) {
       std::fmod(scale.x, real{ 1 }) == 0 &&
       std::fmod(scale.y, real{ 1 }) == 0)
     filter = ScaleFilter::box;
+
+  if (filter == ScaleFilter::point_sample && (scale.x < 1 || scale.y < 1)) {
+    // stbir cannot downsample without blending colors?
+    const auto image_rgbaf = image.view<const RGBAF>();
+    return downsample_image_median(image_rgbaf, scale);
+  }
 
   auto output = Image(image.type(), width, height);
   auto data_type = stbir_datatype{ };
