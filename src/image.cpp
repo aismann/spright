@@ -199,21 +199,16 @@ namespace {
     const auto p3 = transform( w2,  h2);
     const auto mx = std::max(std::max(std::max(p0.x, p1.x), p2.x), p3.x);
     const auto my = std::max(std::max(std::max(p0.y, p1.y), p2.y), p3.y);
-
-    // make destination size even/odd like source
-    const auto dx = round_to_int(mx * 2.0);
-    const auto dy = round_to_int(my * 2.0);
-    auto dest = Image(source.type(),
-      dx + (source.width() % 2 != dx % 2 ? 1 : 0), 
-      dy + (source.height() % 2 != dy % 2 ? 1 : 0));
+    auto dest = Image(source.type(), round_to_int(mx * 2.0), round_to_int(my * 2.0));
     const auto dest_view = dest.view<T>();
 
+    // not sure where these -0.5 come from...
     const auto source_center = PointF(
-      to_real(source.width()) / 2.0, 
-      to_real(source.height()) / 2.0);
+      to_real(source.width()) / 2 - 0.5, 
+      to_real(source.height()) / 2 - 0.5);
     const auto dest_center = PointF(
-      to_real(dest.width()) / 2.0, 
-      to_real(dest.height()) / 2.0);
+      to_real(dest.width()) / 2 - 0.5,
+      to_real(dest.height()) / 2 - 0.5);
     for (auto y = 0; y < dest.height(); ++y)
       for (auto x = 0; x < dest.width(); ++x)
         dest_view.value_at(Point(x, y)) = sample(
