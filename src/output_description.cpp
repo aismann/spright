@@ -68,11 +68,11 @@ namespace {
     return json_point;
   }
 
-  inja::json json_compact_point_list(const std::vector<PointF>& points) {
+  inja::json json_offset_point_list(const std::vector<PointF>& points, const Point& offset) {
     auto list = inja::json::array();
     for (const auto& point : points) {
-      list.push_back(point.x);
-      list.push_back(point.y);
+      list.push_back(point.x + offset.x);
+      list.push_back(point.y + offset.y);
     }
     return list;
   }
@@ -193,7 +193,8 @@ namespace {
         json_sprite["pivot"] = json_point(sprite->pivot);
         json_sprite["margin"] = json_margin(sprite->margin);
         json_sprite["rotated"] = sprite->rotated;
-        json_sprite["outline"] = json_compact_point_list(sprite->outline);
+        const auto relative_to_rect = (sprite->trimmed_rect.xy() - sprite->rect.xy());
+        json_sprite["outline"] = json_offset_point_list(sprite->outline, relative_to_rect);
         slice_sprites[slice_index].push_back(sprite_index);
       }
       json_sprite["tags"] = sprite->tags;
