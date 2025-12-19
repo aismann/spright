@@ -52,8 +52,8 @@ namespace {
       int threshold) {
     const auto sample = [](cpVect point, void *data) -> cpFloat {
       const auto& image_mono = *static_cast<ImageView<const RGBA::Channel>*>(data);
-      const auto x = floor_to_int(point.x - 0.5);
-      const auto y = floor_to_int(point.y - 0.5);
+      const auto x = round_to_int(point.x - 0.5);
+      const auto y = round_to_int(point.y - 0.5);
       if (x < 0 || x >= image_mono.width() || 
           y < 0 || y >= image_mono.height())
         return 0;
@@ -63,8 +63,8 @@ namespace {
     const auto outlines = cpPolylineSetNew();
     cpMarchHard(
       { -1, -1, to_real(image_mono.width() + 1), to_real(image_mono.height() + 1) },
-      to_unsigned(image_mono.width() + 3),
-      to_unsigned(image_mono.height() + 3),
+      to_unsigned(image_mono.width() + 2),
+      to_unsigned(image_mono.height() + 2),
       std::max(threshold, 1) - 1,
       reinterpret_cast<cpMarchSegmentFunc>(cpPolylineSetCollectSegment), outlines,
       sample, &image_mono);
@@ -124,6 +124,16 @@ namespace {
       const_cast<cpPolyline*>(&polyline), tolerance));
   }
 
+  void remove_end_point(cpPolyline& polyline) {
+    if (polyline.count < 2)
+      return;
+    const auto& first = polyline.verts[0];
+    const auto& last = polyline.verts[polyline.count - 1];
+    if (std::abs(first.x - last.x) < 0.25 && 
+        std::abs(first.y - last.y) < 0.25)
+      --polyline.count;
+  }
+
   std::vector<PointF> to_point_list(const cpPolyline& polyline) {
     auto outline = std::vector<PointF>();
     outline.reserve(to_unsigned(polyline.count));
@@ -156,12 +166,13 @@ namespace {
       auto outline = get_polygon_outline(
         levels.view<RGBA::Channel>(), sprite.trim_threshold);
       outline = to_convex_polygon(*outline, 0);
-      outline = simplify_polygon(*outline, 3);
-      // TODO: fix expanding by non-uniform margin
+      outline = simplify_polygon(*outline, 0.25);
+      remove_end_point(*outline);
       expand_polygon(*outline, sprite.trim_margin.x0);
       sprite.outline = to_point_list(*outline);
     }
-    else {
+
+    if (sprite.outline.empty()) {
       const auto w = to_real(sprite.trimmed_source_rect.w);
       const auto h = to_real(sprite.trimmed_source_rect.h);
       sprite.outline.push_back({ 0, 0 });
