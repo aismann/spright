@@ -286,10 +286,6 @@ bool InputParser::overlaps_sprite_or_skipped_rect(const Rect& rect) const {
 }
 
 void InputParser::deduce_sequence_sprites(State& state) {
-  // prevent grid and atlas in sequences
-  state.grid = { };
-  state.grid_cells = { };
-  state.atlas_merge_distance = -1;
 
   auto skip_already_added = sprites_or_skips_in_current_input();
   for (auto i = 0; i < state.source_filenames.count(); ++i) {
@@ -551,6 +547,15 @@ void InputParser::sheet_begins([[maybe_unused]] State& state) {
   m_inputs_in_current_sheet = { };
 }
 
+void InputParser::input_begins(State& state) {
+  // prevent grid and atlas in sequences
+  if (state.source_filenames.is_sequence()) {
+    state.grid = { };
+    state.grid_cells = { };
+    state.atlas_merge_distance = -1;
+  }
+}
+
 void InputParser::glob_begins([[maybe_unused]] State& state) {
   m_inputs_in_current_glob = { };
 }
@@ -782,6 +787,9 @@ void InputParser::parse(std::istream& input,
 
       if (definition == Definition::sheet) {
         sheet_begins(state);
+      }
+      else if (definition == Definition::input) {
+        input_begins(state);
       }
       else if (definition == Definition::glob) {
         glob_begins(state);

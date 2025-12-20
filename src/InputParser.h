@@ -51,6 +51,7 @@ private:
   void sheet_begins(State& state);
   void glob_begins(State& state);
   void glob_ends(State& state);
+  void input_begins(State& state);
   void input_ends(State& state);
   void update_applied_definitions(Definition definition);
   void update_not_applied_definitions(Definition definition, int line_number);
