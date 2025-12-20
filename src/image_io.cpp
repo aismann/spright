@@ -100,13 +100,13 @@ namespace {
     return palette;
   }
 
-  int index_of_closest_palette_color(const Palette& palette, const RGBA& color) {
-    auto min_index = 0;
+  size_t index_of_closest_palette_color(const Palette& palette, const RGBA& color) {
+    auto min_index = size_t{ };
     auto min_distance = std::numeric_limits<int>::max();
     for (auto i = 0u; i < palette.size(); ++i) {
-      const auto r = palette[i].r - color.r;
-      const auto g = palette[i].g - color.g;
-      const auto b = palette[i].b - color.b;
+      const auto r = to_int(palette[i].r) - to_int(color.r);
+      const auto g = to_int(palette[i].g) - to_int(color.g);
+      const auto b = to_int(palette[i].b) - to_int(color.b);
       const auto distance = (r * r + g * g + b * b);
       if (distance < min_distance) {
         min_index = to_int(i);
@@ -116,8 +116,29 @@ namespace {
     return min_index;
   }
 
-  const RGBA& closest_palette_color(const Palette& palette, const RGBA& color) {
-    return palette[to_unsigned(index_of_closest_palette_color(palette, color))];
+  struct ClosestPaletteColorCache {
+    RGBA color;
+    size_t result;
+
+    explicit ClosestPaletteColorCache(const RGBA& first_color) 
+      : color(first_color), result(0) {
+      // ensure it does not match
+      color.r += 1;
+    }
+  };
+
+  size_t index_of_closest_palette_color(const Palette& palette, const RGBA& color,
+      ClosestPaletteColorCache& cache) {
+    if (color != cache.color) {
+      cache.color = color;
+      cache.result = index_of_closest_palette_color(palette, color);
+    }
+    return cache.result;
+  }
+
+  const RGBA& closest_palette_color(const Palette& palette, const RGBA& color,
+      ClosestPaletteColorCache& cache) {
+    return palette[index_of_closest_palette_color(palette, color, cache)];
   }
 
   // https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
@@ -128,13 +149,15 @@ namespace {
     const auto saturate = [](int value) {
       return RGBA::to_channel(std::clamp(value, 0, 255));
     };
+
+    auto closest_palette_color_cache = ClosestPaletteColorCache(image_rgba.value_at({ 0, 0 }));
     const auto w = image_rgba.width();
     const auto h = image_rgba.height();
     for (auto y = 0; y < h; ++y)
       for (auto x = 0; x < w; ++x) {
         auto& color = image_rgba.value_at({ x, y });
         const auto old_color = color;
-        color = closest_palette_color(palette, color);
+        color = closest_palette_color(palette, color, closest_palette_color_cache);
         const auto error_r = diff(old_color.r, color.r);
         const auto error_g = diff(old_color.g, color.g);
         const auto error_b = diff(old_color.b, color.b);
@@ -178,11 +201,12 @@ namespace {
   Image quantize_image(ImageView<const RGBA> image_rgba, const Palette& palette) {
     auto out = Image(ImageType::Mono, image_rgba.width(), image_rgba.height());
     const auto out_mono = out.view<RGBA::Channel>();
+    auto closest_palette_color_cache = ClosestPaletteColorCache(image_rgba.value_at({ 0, 0 }));
     for (auto y = 0; y < image_rgba.height(); ++y)
       for (auto x = 0; x < image_rgba.width(); ++x)
         out_mono.value_at({ x, y }) = RGBA::to_channel(
           index_of_closest_palette_color(palette,
-            image_rgba.value_at({ x, y })));
+            image_rgba.value_at({ x, y }), closest_palette_color_cache));
     return out;
   }
 
@@ -207,8 +231,8 @@ namespace {
 
     auto transparent_index = -1;
     if (animation.color_key)
-      transparent_index = index_of_closest_palette_color(
-        palette, *animation.color_key);
+      transparent_index = to_int(index_of_closest_palette_color(
+        palette, *animation.color_key));
 
     auto width = 0;
     auto height = 0;
