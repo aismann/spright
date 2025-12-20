@@ -243,6 +243,8 @@ void InputParser::duplicate_ends(State& state) {
     update_applied_definitions(Definition::transform);
 
   const auto& original_sprite = [&]() {
+    if (!m_sprites_in_current_input)
+      error("no sprite to duplicate");
     if (!state.duplicate_id.empty()) {
       auto it = std::prev(m_sprites.end());
       for (auto i = 0; i < m_sprites_in_current_input; ++i, --it)
@@ -250,8 +252,6 @@ void InputParser::duplicate_ends(State& state) {
           return *it;
       error("sprite to duplicate '", state.duplicate_id, "' not found");
     }
-    if (!m_sprites_in_current_input)
-      error("no sprite to duplicate");
     return m_sprites.back();
   }();
   
