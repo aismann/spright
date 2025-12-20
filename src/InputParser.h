@@ -14,7 +14,7 @@ public:
   std::vector<Sprite> sprites() && { return std::move(m_sprites); }
   std::vector<Description> descriptions() && { return std::move(m_descriptions); }
   VariantMap variables() && { return std::move(m_variables); }
-  std::string autocomplete_output() const { return m_autocomplete_output.str(); }
+  std::string complete_output() const { return m_complete_output.str(); }
 
 private:
   struct NotAppliedDefinition {
@@ -32,7 +32,7 @@ private:
   void set_transform(const std::string& transform_id, TransformPtr transform);
   TransformPtr get_transform(const std::string& transform_id);
   Rect get_grid_rect(const State& state);
-  bool should_autocomplete(const std::string& filename, bool is_update) const;
+  bool should_complete(const std::string& filename, bool is_update) const;
   bool overlaps_sprite_or_skipped_rect(const Rect& rect) const;
   void sprite_ends(State& state);
   void duplicate_ends(State& state);
@@ -62,7 +62,7 @@ private:
   void transform_ends(State& state);
 
   const Settings m_settings;
-  std::ostringstream m_autocomplete_output;
+  std::ostringstream m_complete_output;
   std::filesystem::path m_input_file;
   int m_warning_line_number{ };
   std::vector<Input> m_inputs;

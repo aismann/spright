@@ -28,17 +28,17 @@ bool interpret_commandline(Settings& settings, int argc, const char* argv[]) {
       else if (mode == "describe-input")
         settings.mode = Mode::describe_input;
       else if (mode == "complete") {
-        settings.mode = Mode::autocomplete;
+        settings.mode = Mode::complete;
         if (i + 1 < argc && *argv[i + 1] != '-')
-          settings.autocomplete_pattern = unquote(argv[++i]);
+          settings.complete_pattern = unquote(argv[++i]);
       }
       else
         return false;
     }
     else if (argument == "-c" || argument == "--complete") {
-      settings.mode = Mode::autocomplete;
+      settings.mode = Mode::complete;
       if (i + 1 < argc && *argv[i + 1] != '-')
-        settings.autocomplete_pattern = unquote(argv[++i]);
+        settings.complete_pattern = unquote(argv[++i]);
     }
     else if (argument == "-i" || argument == "--input") {
       if (++i >= argc)
@@ -74,7 +74,7 @@ bool interpret_commandline(Settings& settings, int argc, const char* argv[]) {
 
   if (settings.output_file.empty())
     settings.output_file =
-      (settings.mode != Mode::autocomplete ? settings.default_output_file :
+      (settings.mode != Mode::complete ? settings.default_output_file :
        settings.input_file == "stdin" ? "stdout" :
        settings.input_file);
 

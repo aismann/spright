@@ -156,11 +156,11 @@ MapVectorPtr InputParser::get_maps(const State& state, const ImageFilePtr& sourc
   return it->second;
 }
 
-bool InputParser::should_autocomplete(const std::string& filename, bool is_update) const {
-  if (m_settings.mode == Mode::autocomplete) {
+bool InputParser::should_complete(const std::string& filename, bool is_update) const {
+  if (m_settings.mode == Mode::complete) {
     // complete everything matching pattern
-    return (m_settings.autocomplete_pattern.empty() ||
-      match(m_settings.autocomplete_pattern, filename));
+    return (m_settings.complete_pattern.empty() ||
+      match(m_settings.complete_pattern, filename));
   }
   else {
     // automatically deduce definitions when there are none yet
@@ -304,8 +304,8 @@ void InputParser::deduce_sequence_sprites(State& state) {
             state.path / state.source_filenames.get_nth_filename(i), error))
         break;
 
-    if (m_settings.mode == Mode::autocomplete) {
-      auto& os = m_autocomplete_output;
+    if (m_settings.mode == Mode::complete) {
+      auto& os = m_complete_output;
       os << state.indent << "sprite \n";
     }
     sprite_ends(state);
@@ -407,8 +407,8 @@ void InputParser::deduce_grid_sprites(State& state) {
       if (is_update && overlaps_sprite_or_skipped_rect(rect))
         continue;
 
-      if (m_settings.mode == Mode::autocomplete) {
-        auto& os = m_autocomplete_output;
+      if (m_settings.mode == Mode::complete) {
+        auto& os = m_complete_output;
         if (!std::exchange(output_offset, true)) {
           if (y)
             os << state.indent << "row " << y << "\n";
@@ -442,8 +442,8 @@ void InputParser::deduce_atlas_sprites(State& state) {
     if (is_update && overlaps_sprite_or_skipped_rect(rect))
       continue;
 
-    if (m_settings.mode == Mode::autocomplete) {
-      auto& os = m_autocomplete_output;
+    if (m_settings.mode == Mode::complete) {
+      auto& os = m_complete_output;
       os << state.indent << "sprite \n";
       if (rect != source->rect())
         os << state.indent << m_detected_indentation << "rect "
@@ -460,8 +460,8 @@ void InputParser::deduce_single_sprite(State& state) {
   if (sprites_or_skips_in_current_input())
     return;
 
-  if (m_settings.mode == Mode::autocomplete)
-    m_autocomplete_output << state.indent << "sprite \n";
+  if (m_settings.mode == Mode::complete)
+    m_complete_output << state.indent << "sprite \n";
 
   sprite_ends(state);
 }
@@ -537,8 +537,8 @@ void InputParser::deduce_globbed_inputs(State& state) {
         }))
       continue;
 
-    if (m_settings.mode == Mode::autocomplete)
-      m_autocomplete_output << "\n" << state.indent << "input \"" <<
+    if (m_settings.mode == Mode::complete)
+      m_complete_output << "\n" << state.indent << "input \"" <<
         sequence.sequence_filename() << "\"\n";
 
     auto input_state = state;
@@ -556,7 +556,7 @@ void InputParser::glob_begins([[maybe_unused]] State& state) {
 }
 
 void InputParser::glob_ends(State& state) {
-  if (should_autocomplete(state.glob_pattern, m_inputs_in_current_glob > 0))
+  if (should_complete(state.glob_pattern, m_inputs_in_current_glob > 0))
     deduce_globbed_inputs(state);
 }
 
@@ -564,7 +564,7 @@ void InputParser::input_ends(State& state) {
   update_applied_definitions(Definition::input);
   update_applied_definitions(Definition::sprite);
   
-  if (should_autocomplete(state.source_filenames.sequence_filename(),
+  if (should_complete(state.source_filenames.sequence_filename(),
         sprites_or_skips_in_current_input() > 0)) {
     auto sprite_indent = state.indent + m_detected_indentation;
     std::swap(state.indent, sprite_indent);
@@ -670,7 +670,7 @@ InputParser::InputParser(Settings settings)
 
 void InputParser::parse(std::istream& input, 
     const std::filesystem::path& input_file) {
-  m_autocomplete_output = { };
+  m_complete_output = { };
   m_detected_indentation = "  ";
   m_input_file = input_file;
 
@@ -688,7 +688,7 @@ void InputParser::parse(std::istream& input,
   top->sprite_id = default_sprite_id;
   m_not_applied_definitions.emplace_back();
 
-  auto autocomplete_space = std::ostringstream();
+  auto complete_space = std::ostringstream();
   const auto pop_scope_stack = [&](int level) {
     for (auto last = scope_stack.rbegin(); ; ++last) {
       if (has_implicit_scope(last->definition) && level <= last->level) {
@@ -742,9 +742,9 @@ void InputParser::parse(std::istream& input,
     line = rtrim(line);
 
     if (line.empty()) {
-      if (m_settings.mode == Mode::autocomplete)
+      if (m_settings.mode == Mode::complete)
         if (!input.eof())
-          autocomplete_space << buffer << '\n';
+          complete_space << buffer << '\n';
       continue;
     }
 
@@ -808,9 +808,9 @@ void InputParser::parse(std::istream& input,
         });
     });
 
-    if (m_settings.mode == Mode::autocomplete) {
-      m_autocomplete_output << autocomplete_space.str() << buffer << '\n';
-      autocomplete_space = { };
+    if (m_settings.mode == Mode::complete) {
+      m_complete_output << complete_space.str() << buffer << '\n';
+      complete_space = { };
     }
   }
 
@@ -822,8 +822,8 @@ void InputParser::parse(std::istream& input,
     assert(m_not_applied_definitions.empty());
   });
 
-  if (m_settings.mode == Mode::autocomplete)
-    m_autocomplete_output << autocomplete_space.str();
+  if (m_settings.mode == Mode::complete)
+    m_complete_output << complete_space.str();
 }
 
 int InputParser::sprites_or_skips_in_current_input() const {

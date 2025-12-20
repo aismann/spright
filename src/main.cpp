@@ -26,7 +26,7 @@ int main(int argc, const char* argv[]) try {
 
   auto slices = std::vector<Slice>();
   auto textures = std::vector<Texture>();
-  if (settings.mode != Mode::autocomplete &&
+  if (settings.mode != Mode::complete &&
       settings.mode != Mode::describe_input) {
 
     transform_sprites(sprites);
@@ -55,7 +55,7 @@ int main(int argc, const char* argv[]) try {
     evaluate_expressions(settings, sprites, textures, variables);
   }
 
-  if (settings.mode != Mode::autocomplete) {
+  if (settings.mode != Mode::complete) {
     complete_description_definitions(settings, descriptions, variables);
 
     output_descriptions(settings, descriptions, 

@@ -8,7 +8,7 @@ namespace spright {
 enum class Mode {
   update,
   rebuild,
-  autocomplete,
+  complete,
   describe,
   describe_input,
 };
@@ -23,7 +23,7 @@ struct Settings {
   std::filesystem::path output_file;
   bool output_file_set{ };
   std::filesystem::path template_file;
-  std::string autocomplete_pattern;
+  std::string complete_pattern;
   bool verbose{ };
 };
 

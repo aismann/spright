@@ -12,12 +12,12 @@ input "test/Items.png"
   colorkey
   grid 16 16
   )");
-  auto parser = InputParser(Settings{ .mode = Mode::autocomplete });
+  auto parser = InputParser(Settings{ .mode = Mode::complete });
   REQUIRE_NOTHROW(parser.parse(input));
   const auto& sprites = parser.sprites();
   REQUIRE(sprites.size() == 18);
 
-  const auto text = parser.autocomplete_output();
+  const auto text = parser.complete_output();
   CHECK(text == R"(
 sheet "sprites"
 input "test/Items.png"

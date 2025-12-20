@@ -19,11 +19,11 @@ InputDefinition parse_definition(const Settings& settings) {
     parser.parse(input, settings.input_file);
   }
 
-  if (settings.mode == Mode::autocomplete) {
+  if (settings.mode == Mode::complete) {
     if (settings.output_file.string() == "stdout")
-      std::cout << parser.autocomplete_output();
+      std::cout << parser.complete_output();
     else 
-      update_textfile(settings.output_file, parser.autocomplete_output());
+      update_textfile(settings.output_file, parser.complete_output());
   }
 
   return {
