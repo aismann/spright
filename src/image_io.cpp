@@ -109,7 +109,7 @@ namespace {
       const auto b = to_int(palette[i].b) - to_int(color.b);
       const auto distance = (r * r + g * g + b * b);
       if (distance < min_distance) {
-        min_index = to_int(i);
+        min_index = i;
         min_distance = distance;
       }
     }

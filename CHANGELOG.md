@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 4.0.0] - 2025-12-22
+
+### Changed
+
+- Renamed `*-bounds` definitions to `*-size`.
+- Changed meaning of `rect` in the output description. It used to be the logical bounds of the sprite. Now it is the rectangle the sprite takes on the sheet (which can be bigger than `trimmedRect`, when the size is increased by `min-size`, `divisible-size`, `common-size`).
+- The logical bounds of a sprite can now be defined by a `margin`, which is added to `rect`.
+- Renamed `vertices` to `outline` in output description and made it relative to `rect` (it used to be relative to the `trimmedRect`).
+
+### Added
+
+- Added `margin` definition.
+- Added the sheets' `outputs` to description.
+
+### Fixed
+
+- Fixed `divisible-width`.
+- Fixed `trimmedSourceRect` in description when transforming.
+- Fixed `align-pivot` when anchor is not top/left.
+- Fixed alignment when sprite is rotated.
+- Fixed `extrude` and uncropped pivot-point.
+- Fixed `scale` when downsampling to nearest.
+- Improved `rotate` accuracy.
+- Fixed `trim convex`.
+- Fixed crash on `duplicate` before first sprite.
+- Prevent `grid`/`atlas` in input sequences.
+- Ensuring invalid definitions do not lead to invalid states.
+
 ## [Version 3.8.0] - 2025-11-21
 
 ### Added
@@ -369,6 +397,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed -- commandline arguments.
 - Fixed sample cpp.template.
 
+[version 4.0.0]: https://github.com/houmain/spright/compare/3.8.0...4.0.0
 [version 3.8.0]: https://github.com/houmain/spright/compare/3.7.0...3.8.0
 [version 3.7.0]: https://github.com/houmain/spright/compare/3.6.1...3.7.0
 [version 3.6.1]: https://github.com/houmain/spright/compare/3.5.4...3.6.1

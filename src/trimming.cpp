@@ -69,7 +69,9 @@ namespace {
       reinterpret_cast<cpMarchSegmentFunc>(cpPolylineSetCollectSegment), outlines,
       sample, &image_mono);
 
-    assert(outlines->count > 0);
+    if (outlines->count == 0)
+      return { };
+
     const auto right = cpFloat(image_mono.width());
     const auto bottom = cpFloat(image_mono.height());
     for (auto i = 0; i < outlines->count; ++i) {
@@ -163,13 +165,14 @@ namespace {
         get_gray_levels(sprite.source->image(), sprite.trimmed_source_rect) :
         get_alpha_levels(sprite.source->image(), sprite.trimmed_source_rect));
 
-      auto outline = get_polygon_outline(
-        levels.view<RGBA::Channel>(), sprite.trim_threshold);
-      outline = to_convex_polygon(*outline, 0);
-      outline = simplify_polygon(*outline, 0.25);
-      remove_end_point(*outline);
-      expand_polygon(*outline, sprite.trim_margin.x0);
-      sprite.outline = to_point_list(*outline);
+      if (auto outline = get_polygon_outline(
+          levels.view<RGBA::Channel>(), sprite.trim_threshold)) {
+        outline = to_convex_polygon(*outline, 0);
+        outline = simplify_polygon(*outline, 0.25);
+        remove_end_point(*outline);
+        expand_polygon(*outline, sprite.trim_margin.x0);
+        sprite.outline = to_point_list(*outline);
+      }
     }
 
     if (sprite.outline.empty()) {

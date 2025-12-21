@@ -251,7 +251,7 @@ namespace {
     return dest;
   }
 
-  Image downsample_image_nearest(ImageView<const RGBAF> image_rgbaf, const SizeF& scale) {
+  [[maybe_unused]] Image downsample_image_nearest(ImageView<const RGBAF> image_rgbaf, const SizeF& scale) {
     return downsample_image_sample(image_rgbaf, scale,
       [&](const RectF& rect) {
         const auto point = Point(round_to_int(rect.x + rect.w / 2), round_to_int(rect.y + rect.h / 2));

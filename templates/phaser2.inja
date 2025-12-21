@@ -10,7 +10,7 @@
     {
       "filename": "{{ sprite.id }}",
       "rotated": {{ sprite.rotated }},
-      "trimmed": {% if sprite.rect.w == sprite.trimmedRect.w and sprite.rect.h == sprite.trimmedRect.h %}false{% else %}true{% endif %},
+      "trimmed": {% if sprite.sourceRect.w == sprite.trimmedSourceRect.w and sprite.sourceRect.h == sprite.trimmedSourceRect.h %}false{% else %}true{% endif %},
       "sourceSize": {
         "w": {{ round(sprite.sourceRect.w * scale, 0) }},
         "h": {{ round(sprite.sourceRect.h * scale, 0) }}

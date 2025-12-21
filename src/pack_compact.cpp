@@ -20,8 +20,8 @@ namespace {
     const auto border = to_real(border_padding) - padding;
     const auto x0 = border;
     const auto y0 = border;
-    const auto x1 = to_real(slice.width) - border - 0.5;
-    const auto y1 = to_real(slice.height) - border - 0.5;
+    const auto x1 = to_real(slice.width) - border;
+    const auto y1 = to_real(slice.height) - border;
 
     auto shapes = std::vector<ShapePtr>();
     shapes.emplace_back(cpSpaceAddShape(space, cpSegmentShapeNew(cpSpaceGetStaticBody(space), cpv(x0, y0), cpv(x1, y0), 0)));
@@ -74,10 +74,10 @@ void pack_compact(const SheetPtr& sheet, SpriteSpan sprites,
     std::vector<Slice>& slices) {
   const auto fast = (sheet->allow_rotate == false);
   pack_binpack(sheet, sprites, slices, fast);
-  for (auto& slice : slices) {
+  scheduler.for_each_parallel(slices, [&](Slice& slice) {
     recompute_slice_size(slice);
     compact_sprites(slice, sheet->border_padding, sheet->shape_padding);
-  }
+  });
 }
 
 } // namespace

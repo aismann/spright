@@ -104,7 +104,7 @@ if(ENABLE_TEST)
         test/test-main.cpp
         test/test-common.cpp
         test/test-scope.cpp
-        test/test-autocompletion.cpp
+        test/test-completion.cpp
         test/test-packing.cpp
         test/test-performance.cpp
         test/test-globbing.cpp
