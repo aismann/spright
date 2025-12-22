@@ -21,10 +21,6 @@ jobs:
             package: ZIP
             configure_args: "-DPORTABLE=ON"
 
-          - os: macos-13
-            package: ZIP
-            configure_args: "-DPORTABLE=ON"
-
           - os: macos-14
             package: ZIP
             configure_args: "-DPORTABLE=ON -DCPACK_SYSTEM_NAME=Darwin-arm64"
